@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BIC Work Orders</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #171b24;
+    --bg3: #1e2433;
+    --border: #2a3045;
+    --border2: #3a4460;
+    --text: #e8ecf4;
+    --text2: #8b95b0;
+    --text3: #556080;
+    --accent: #4a9eff;
+    --accent2: #2d7de0;
+    --green: #2ecc71;
+    --yellow: #f39c12;
+    --red: #e74c3c;
+    --purple: #9b59b6;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .logo span {
+    color: var(--text2);
+    font-weight: 400;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn-dash {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    text-decoration: none;
+    border: 1px solid var(--border2);
+    padding: 6px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+
+  .btn-dash:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* CAPTURE SCREEN */
+  #screen-capture {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 57px);
+    padding: 40px 20px;
+    gap: 32px;
+  }
+
+  #screen-capture.active {
+    display: flex;
+  }
+
+  .capture-title {
+    text-align: center;
+  }
+
+  .capture-title h1 {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .capture-title p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .capture-zone {
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 3/4;
+    border: 2px dashed var(--border2);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg2);
+  }
+
+  .capture-zone:hover {
+    border-color: var(--accent);
+    background: rgba(74, 158, 255, 0.04);
+  }
+
+  .capture-zone.has-image {
+    border-style: solid;
+    border-color: var(--accent);
+  }
+
+  .capture-zone img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .capture-zone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+  }
+
+  .capture-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .capture-icon svg {
+    width: 28px;
+    height: 28px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .capture-zone p {
+    font-size: 13px;
+    color: var(--text2);
+    text-align: center;
+    font-family: var(--mono);
+  }
+
+  #file-input { display: none; }
+
+  .capture-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 17, 23, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 2;
+    backdrop-filter: blur(2px);
+  }
+
+  .capture-overlay p {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .btn-change {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-change:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  .btn-primary {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 400px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent2);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--text2);
+    color: var(--text);
+  }
+
+  /* PROCESSING SCREEN */
+  #screen-processing {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 57px);
+    gap: 24px;
+    padding: 40px 20px;
+  }
+
+  #screen-processing.active { display: flex; }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .processing-text {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text2);
+    text-align: center;
+  }
+
+  .processing-text strong {
+    display: block;
+    color: var(--text);
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  /* REVIEW SCREEN */
+  #screen-review {
+    display: none;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  #screen-review.active { display: block; }
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .review-header h2 {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .review-header p {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  .review-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* PO HEADER SECTION */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .po-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .field-group label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+
+  .field-group input, .field-group textarea {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 4px;
+    width: 100%;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+
+  .field-group input:focus, .field-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .field-group.wide { grid-column: 1 / -1; }
+
+  /* HANDWRITTEN NOTES - highlighted */
+  .notes-highlight {
+    background: rgba(243, 156, 18, 0.08);
+    border: 1px solid rgba(243, 156, 18, 0.3);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--yellow);
+    font-style: italic;
+  }
+
+  /* LINE ITEMS TABLE */
+  .table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 24px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 900px;
+  }
+
+  thead tr {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border2);
+  }
+
+  thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  tbody td {
+    padding: 6px 4px;
+    vertical-align: middle;
+  }
+
+  tbody td input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 3px;
+    width: 100%;
+    transition: all 0.1s;
+  }
+
+  tbody td input:focus {
+    outline: none;
+    background: var(--bg3);
+    border-color: var(--accent);
+  }
+
+  tbody td input:hover:not(:focus) {
+    border-color: var(--border2);
+    background: var(--bg2);
+  }
+
+  .col-line { width: 48px; }
+  .col-pn { width: 160px; }
+  .col-qty { width: 56px; }
+  .col-desc { min-width: 200px; }
+  .col-matpn { width: 160px; }
+  .col-matdesc { min-width: 180px; }
+  .col-matused { width: 90px; }
+  .col-matper { width: 90px; }
+  .col-due { width: 100px; }
+  .col-del { width: 40px; }
+
+  .btn-del {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.1s;
+  }
+
+  .btn-del:hover {
+    color: var(--red);
+    background: rgba(231, 76, 60, 0.1);
+  }
+
+  .mat-per-computed {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    padding: 5px 8px;
+    white-space: nowrap;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .status-bar.error {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: var(--red);
+    display: block;
+  }
+
+  .status-bar.success {
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    color: var(--green);
+    display: block;
+  }
+
+  .submit-row {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .btn-submit {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-submit:hover:not(:disabled) {
+    background: #27ae60;
+    transform: translateY(-1px);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* SUCCESS SCREEN */
+  #screen-success {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 57px);
+    gap: 20px;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  #screen-success.active { display: flex; }
+
+  .success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(46, 204, 113, 0.1);
+    border: 2px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .success-icon svg {
+    width: 32px;
+    height: 32px;
+    stroke: var(--green);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .success-po {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .success-detail {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .success-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  /* CONFIG SCREEN */
+  #screen-config {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 57px);
+    gap: 20px;
+    padding: 40px 20px;
+  }
+
+  #screen-config.active { display: flex; }
+
+  .config-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .config-box h2 {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .config-box p {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .config-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .config-field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .config-field input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 4px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .config-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .review-header { flex-direction: column; align-items: flex-start; }
+    .submit-row { justify-content: stretch; }
+    .btn-submit, .btn-secondary { width: 100%; justify-content: center; }
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    .capture-zone { aspect-ratio: 4/3; max-width: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">BIC <span>/ Work Orders</span></div>
+  <div class="header-actions">
+    <a href="dashboard.html" class="btn-dash">Dashboard →</a>
+  </div>
+</div>
+
+<!-- CONFIG SCREEN -->
+<div id="screen-config" class="screen">
+  <div class="config-box">
+    <h2>Setup Required</h2>
+    <p>Enter your API credentials to get started. These are saved in your browser only — never sent anywhere except Google's servers.</p>
+    <div class="config-fields">
+      <div class="config-field">
+        <label>Gemini API Key</label>
+        <input type="password" id="cfg-gemini" placeholder="AIza...">
+      </div>
+      <div class="config-field">
+        <label>Apps Script Web App URL</label>
+        <input type="text" id="cfg-script" placeholder="https://script.google.com/macros/s/...">
+      </div>
+    </div>
+    <br>
+    <button class="btn-primary" onclick="saveConfig()">Save & Continue</button>
+  </div>
+</div>
+
+<!-- CAPTURE SCREEN -->
+<div id="screen-capture" class="screen">
+  <div class="capture-title">
+    <h1>New Purchase Order</h1>
+    <p>Take a photo of the PO or select from your camera roll.</p>
+  </div>
+
+  <div class="capture-zone" id="capture-zone" onclick="document.getElementById('file-input').click()">
+    <div class="capture-zone-content" id="capture-content">
+      <div class="capture-icon">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+      <p>Tap to take photo<br>or select from gallery</p>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" accept="image/*" capture="environment">
+
+  <button class="btn-primary" id="btn-extract" disabled onclick="extractData()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    Read PO with AI
+  </button>
+
+  <button class="btn-secondary" onclick="showConfig()">⚙ Settings</button>
+</div>
+
+<!-- PROCESSING SCREEN -->
+<div id="screen-processing" class="screen">
+  <div class="spinner"></div>
+  <div class="processing-text">
+    <strong>Reading your PO...</strong>
+    Gemini is extracting the data. This takes about 10 seconds.
+  </div>
+</div>
+
+<!-- REVIEW SCREEN -->
+<div id="screen-review" class="screen">
+  <div class="review-header">
+    <div>
+      <h2>Review Extracted Data</h2>
+      <p>Edit any field before saving. Click any cell to modify.</p>
+    </div>
+    <div class="review-actions">
+      <button class="btn-secondary" onclick="showCapture()">← Retake Photo</button>
+    </div>
+  </div>
+
+  <div class="section-label">Purchase Order Header</div>
+  <div class="po-fields">
+    <div class="field-group">
+      <label>PO Number</label>
+      <input type="text" id="f-poNumber" placeholder="31384">
+    </div>
+    <div class="field-group">
+      <label>PO Date</label>
+      <input type="text" id="f-poDate" placeholder="04/07/26">
+    </div>
+    <div class="field-group">
+      <label>Ordered By</label>
+      <input type="text" id="f-orderedBy" placeholder="HC">
+    </div>
+    <div class="field-group">
+      <label>Order Description</label>
+      <input type="text" id="f-orderDesc" placeholder="End Tanks for Welch PO 31379">
+    </div>
+    <div class="field-group wide" id="notes-group" style="display:none;">
+      <label>⚠ Handwritten Notes</label>
+      <div class="notes-highlight" id="f-notes"></div>
+    </div>
+  </div>
+
+  <div class="section-label">Line Items</div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-line">Line</th>
+          <th class="col-pn">Part Number</th>
+          <th class="col-qty">Qty</th>
+          <th class="col-desc">Description</th>
+          <th class="col-matpn">Material Part #</th>
+          <th class="col-matdesc">Material Desc</th>
+          <th class="col-matused">Mat Used (in)</th>
+          <th class="col-matper">Per Part (in)</th>
+          <th class="col-due">Due Date</th>
+          <th class="col-del"></th>
+        </tr>
+      </thead>
+      <tbody id="line-items-body"></tbody>
+    </table>
+  </div>
+
+  <div id="status-bar" class="status-bar"></div>
+
+  <div class="submit-row">
+    <button class="btn-secondary" onclick="showCapture()">Cancel</button>
+    <button class="btn-submit" id="btn-submit" onclick="submitPO()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Save to Google Sheets
+    </button>
+  </div>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div id="screen-success" class="screen">
+  <div class="success-icon">
+    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div class="success-po" id="success-po-num">PO #31384</div>
+  <div class="success-detail" id="success-detail">Saved successfully to Google Sheets.</div>
+  <div class="success-actions">
+    <button class="btn-primary" onclick="showCapture(); resetCapture();">+ New PO</button>
+    <a href="dashboard.html" class="btn-secondary" style="display:flex;align-items:center;padding:10px 20px;text-decoration:none;">View Dashboard</a>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const CONFIG_KEY = 'bic_config';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function saveConfig() {
+  const gemini = document.getElementById('cfg-gemini').value.trim();
+  const script = document.getElementById('cfg-script').value.trim();
+  if (!gemini || !script) {
+    alert('Please enter both the Gemini API key and the Apps Script URL.');
+    return;
+  }
+  localStorage.setItem(CONFIG_KEY, JSON.stringify({ gemini, script }));
+  showCapture();
+}
+
+function showConfig() {
+  const cfg = getConfig();
+  if (cfg.gemini) document.getElementById('cfg-gemini').value = cfg.gemini;
+  if (cfg.script) document.getElementById('cfg-script').value = cfg.script;
+  showScreen('config');
+}
+
+// ── SCREENS ─────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+function showCapture() { showScreen('capture'); }
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const cfg = getConfig();
+  if (!cfg.gemini || !cfg.script) {
+    showScreen('config');
+  } else {
+    showCapture();
+  }
+});
+
+// ── FILE INPUT ────────────────────────────────────────────────────────────────
+let currentImageBase64 = null;
+
+document.getElementById('file-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const dataUrl = ev.target.result;
+    currentImageBase64 = dataUrl.split(',')[1];
+
+    const zone = document.getElementById('capture-zone');
+    zone.classList.add('has-image');
+
+    // Show image preview
+    let img = zone.querySelector('img');
+    if (!img) { img = document.createElement('img'); zone.appendChild(img); }
+    img.src = dataUrl;
+
+    // Show overlay
+    let overlay = zone.querySelector('.capture-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'capture-overlay';
+      overlay.innerHTML = '<p>Photo selected</p><button class="btn-change" onclick="event.stopPropagation();document.getElementById(\'file-input\').click()">Change Photo</button>';
+      zone.appendChild(overlay);
+    }
+
+    document.getElementById('btn-extract').disabled = false;
+  };
+  reader.readAsDataURL(file);
+});
+
+function resetCapture() {
+  currentImageBase64 = null;
+  document.getElementById('file-input').value = '';
+  const zone = document.getElementById('capture-zone');
+  zone.classList.remove('has-image');
+  const img = zone.querySelector('img');
+  if (img) img.remove();
+  const overlay = zone.querySelector('.capture-overlay');
+  if (overlay) overlay.remove();
+  document.getElementById('btn-extract').disabled = true;
+}
+
+// ── GEMINI EXTRACTION ─────────────────────────────────────────────────────────
+async function extractData() {
+  if (!currentImageBase64) return;
+  const cfg = getConfig();
+  if (!cfg.gemini) { showConfig(); return; }
+
+  showScreen('processing');
+
+  const prompt = `You are extracting data from a Bell Intercoolers LLC Purchase Order document.
+
+Extract the following and return ONLY valid JSON, no markdown, no explanation:
+
+{
+  "poNumber": "string - the PO Number from the header",
+  "poDate": "string - PO Date as shown",
+  "orderedBy": "string - initials from Ordered By field",
+  "orderDescription": "string - the Order Desc field text",
+  "handwrittenNotes": "string - any handwritten text visible on the document, empty string if none",
+  "lineItems": [
+    {
+      "line": "string - line number e.g. 001",
+      "partNumber": "string - the MAC103-xxx or similar part number",
+      "qty": "number - the order quantity (positive number, from the main line, not M1)",
+      "description": "string - full multi-line description of the part",
+      "materialPartNumber": "string - part number from the M1 sub-line e.g. M00105-0064-ALU",
+      "materialDescription": "string - description from the M1 sub-line e.g. FLAT,Alu,1.00 x10.00",
+      "materialUsed": "number - the absolute value of the negative quantity from the M1 line (inches consumed total)",
+      "dueDate": "string - Dt Req'd date for this line item"
+    }
+  ]
+}
+
+Rules:
+- Only include numbered line items (001, 002, 003...) — each as one object
+- The M1 sub-line below each numbered line is the material — fold it into that line item
+- materialUsed should be positive (e.g. if M1 shows -9.00, materialUsed = 9.00)
+- If a field is not found, use empty string
+- Return only the JSON object, nothing else`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cfg.gemini}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: 'image/jpeg', data: currentImageBase64 } }
+            ]
+          }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error?.message || 'Gemini API error');
+    }
+
+    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Strip any markdown fences
+    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    const data = JSON.parse(text);
+    populateReview(data);
+    showScreen('review');
+
+  } catch (err) {
+    showCapture();
+    alert('Error reading PO: ' + err.message + '\n\nCheck your Gemini API key in Settings.');
+  }
+}
+
+// ── REVIEW POPULATION ─────────────────────────────────────────────────────────
+function populateReview(data) {
+  document.getElementById('f-poNumber').value = data.poNumber || '';
+  document.getElementById('f-poDate').value = data.poDate || '';
+  document.getElementById('f-orderedBy').value = data.orderedBy || '';
+  document.getElementById('f-orderDesc').value = data.orderDescription || '';
+
+  const notesGroup = document.getElementById('notes-group');
+  const notesEl = document.getElementById('f-notes');
+  if (data.handwrittenNotes && data.handwrittenNotes.trim()) {
+    notesEl.textContent = data.handwrittenNotes;
+    notesGroup.style.display = 'flex';
+  } else {
+    notesGroup.style.display = 'none';
+  }
+
+  renderLineItems(data.lineItems || []);
+}
+
+function renderLineItems(items) {
+  const tbody = document.getElementById('line-items-body');
+  tbody.innerHTML = '';
+  items.forEach((item, idx) => {
+    tbody.appendChild(createLineRow(item, idx));
+  });
+}
+
+function createLineRow(item, idx) {
+  const tr = document.createElement('tr');
+  tr.dataset.idx = idx;
+
+  const matUsed = parseFloat(item.materialUsed) || 0;
+  const qty = parseFloat(item.qty) || 1;
+  const perPart = qty > 0 ? (matUsed / qty).toFixed(3) : '';
+
+  tr.innerHTML = `
+    <td class="col-line"><input type="text" value="${esc(item.line)}" data-field="line"></td>
+    <td class="col-pn"><input type="text" value="${esc(item.partNumber)}" data-field="partNumber" style="font-weight:500;color:var(--accent)"></td>
+    <td class="col-qty"><input type="number" value="${esc(item.qty)}" data-field="qty" onchange="recalcPerPart(this)"></td>
+    <td class="col-desc"><input type="text" value="${esc(item.description)}" data-field="description"></td>
+    <td class="col-matpn"><input type="text" value="${esc(item.materialPartNumber)}" data-field="materialPartNumber" style="color:var(--text2)"></td>
+    <td class="col-matdesc"><input type="text" value="${esc(item.materialDescription)}" data-field="materialDescription" style="color:var(--text2)"></td>
+    <td class="col-matused"><input type="number" value="${matUsed || ''}" data-field="materialUsed" onchange="recalcPerPart(this)" step="0.001"></td>
+    <td class="col-matper"><span class="mat-per-computed" id="perpart-${idx}">${perPart ? perPart + '"' : '—'}</span></td>
+    <td class="col-due"><input type="text" value="${esc(item.dueDate)}" data-field="dueDate"></td>
+    <td class="col-del"><button class="btn-del" onclick="deleteRow(this)" title="Remove line">×</button></td>
+  `;
+  return tr;
+}
+
+function esc(val) {
+  if (val === null || val === undefined) return '';
+  return String(val).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function recalcPerPart(input) {
+  const tr = input.closest('tr');
+  const idx = tr.dataset.idx;
+  const qty = parseFloat(tr.querySelector('[data-field="qty"]').value) || 1;
+  const matUsed = parseFloat(tr.querySelector('[data-field="materialUsed"]').value) || 0;
+  const perPart = qty > 0 && matUsed > 0 ? (matUsed / qty).toFixed(3) : '';
+  const el = document.getElementById('perpart-' + idx);
+  if (el) el.textContent = perPart ? perPart + '"' : '—';
+}
+
+function deleteRow(btn) {
+  if (!confirm('Remove this line item?')) return;
+  btn.closest('tr').remove();
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+function setStatus(msg, type) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + type;
+}
+
+async function submitPO() {
+  const cfg = getConfig();
+  if (!cfg.script) { showConfig(); return; }
+
+  const btn = document.getElementById('btn-submit');
+
+  const po = {
+    poNumber: document.getElementById('f-poNumber').value.trim(),
+    poDate: document.getElementById('f-poDate').value.trim(),
+    orderedBy: document.getElementById('f-orderedBy').value.trim(),
+    orderDescription: document.getElementById('f-orderDesc').value.trim(),
+    handwrittenNotes: document.getElementById('f-notes').textContent.trim()
+  };
+
+  if (!po.poNumber) {
+    setStatus('PO Number is required.', 'error');
+    return;
+  }
+
+  const rows = document.querySelectorAll('#line-items-body tr');
+  const lineItems = [];
+
+  rows.forEach(tr => {
+    const get = field => tr.querySelector(`[data-field="${field}"]`)?.value?.trim() || '';
+    const qty = parseFloat(get('qty')) || 0;
+    const matUsed = parseFloat(get('materialUsed')) || 0;
+    lineItems.push({
+      line: get('line'),
+      partNumber: get('partNumber'),
+      qty: qty,
+      description: get('description'),
+      materialPartNumber: get('materialPartNumber'),
+      materialDescription: get('materialDescription'),
+      materialUsed: matUsed,
+      materialPerPart: qty > 0 && matUsed > 0 ? parseFloat((matUsed / qty).toFixed(3)) : '',
+      dueDate: get('dueDate'),
+      notes: ''
+    });
+  });
+
+  if (lineItems.length === 0) {
+    setStatus('At least one line item is required.', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  setStatus('', '');
+
+  try {
+    const response = await fetch(cfg.script, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'submitPO', po, lineItems })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      document.getElementById('success-po-num').textContent = 'PO #' + po.poNumber;
+      document.getElementById('success-detail').textContent =
+        `${lineItems.length} line item${lineItems.length !== 1 ? 's' : ''} saved to Google Sheets.`;
+      showScreen('success');
+    } else {
+      setStatus('Error: ' + result.error, 'error');
+    }
+  } catch (err) {
+    setStatus('Network error. Check your Apps Script URL in Settings.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Save to Google Sheets';
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIC Work Orders — Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #171b24;
+    --bg3: #1e2433;
+    --border: #2a3045;
+    --border2: #3a4460;
+    --text: #e8ecf4;
+    --text2: #8b95b0;
+    --text3: #556080;
+    --accent: #4a9eff;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+
+    --s-not-started: #556080;
+    --s-waiting: #f39c12;
+    --s-in-process: #4a9eff;
+    --s-complete: #2ecc71;
+
+    --overdue: #e74c3c;
+    --due-soon: #f39c12;
+    --ok: #2ecc71;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .logo span { color: var(--text2); font-weight: 400; }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .last-updated {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .btn-refresh {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-refresh:hover { color: var(--text); border-color: var(--accent); }
+
+  .btn-new {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.15s;
+  }
+
+  .btn-new:hover { background: #2d7de0; }
+
+  /* FILTERS */
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .filter-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover { border-color: var(--border2); color: var(--text); }
+  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(74,158,255,0.08); }
+
+  .filter-search {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 12px;
+    border-radius: 4px;
+    width: 200px;
+    margin-left: auto;
+    transition: border-color 0.15s;
+  }
+
+  .filter-search:focus { outline: none; border-color: var(--accent); }
+
+  /* STATS BAR */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat {
+    background: var(--bg2);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .stat-value.overdue { color: var(--overdue); }
+  .stat-value.in-process { color: var(--s-in-process); }
+  .stat-value.complete { color: var(--s-complete); }
+
+  /* MAIN CONTENT */
+  .main {
+    padding: 20px 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* PO CARDS */
+  .po-list { display: flex; flex-direction: column; gap: 16px; }
+
+  .po-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .po-card:hover { border-color: var(--border2); }
+
+  .po-card.overdue { border-left: 3px solid var(--overdue); }
+  .po-card.due-soon { border-left: 3px solid var(--due-soon); }
+  .po-card.all-complete { border-left: 3px solid var(--s-complete); opacity: 0.7; }
+
+  .po-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .po-card-header:hover { background: rgba(255,255,255,0.02); }
+
+  .po-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .po-number {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .po-desc {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .po-by {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+
+  .po-card-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .po-date-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .po-date-badge.overdue { background: rgba(231,76,60,0.15); color: var(--overdue); border: 1px solid rgba(231,76,60,0.3); }
+  .po-date-badge.due-soon { background: rgba(243,156,18,0.12); color: var(--due-soon); border: 1px solid rgba(243,156,18,0.3); }
+  .po-date-badge.ok { background: rgba(46,204,113,0.08); color: var(--s-complete); border: 1px solid rgba(46,204,113,0.2); }
+  .po-date-badge.complete { background: rgba(46,204,113,0.08); color: var(--s-complete); border: 1px solid rgba(46,204,113,0.2); }
+
+  .po-progress {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .progress-dot.not-started { background: var(--s-not-started); }
+  .progress-dot.waiting { background: var(--s-waiting); }
+  .progress-dot.in-process { background: var(--s-in-process); }
+  .progress-dot.complete { background: var(--s-complete); }
+
+  .chevron {
+    font-size: 12px;
+    color: var(--text3);
+    transition: transform 0.2s;
+  }
+
+  .po-card.expanded .chevron { transform: rotate(180deg); }
+
+  /* NOTES CALLOUT */
+  .po-notes {
+    margin: 0 18px 0;
+    padding: 8px 12px;
+    background: rgba(243,156,18,0.08);
+    border: 1px solid rgba(243,156,18,0.25);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--due-soon);
+    font-style: italic;
+    display: none;
+  }
+
+  .po-card.expanded .po-notes { display: block; margin-top: 12px; }
+
+  /* LINE ITEMS TABLE */
+  .po-lines {
+    display: none;
+    padding: 12px 18px 16px;
+    overflow-x: auto;
+  }
+
+  .po-card.expanded .po-lines { display: block; }
+
+  .lines-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 700px;
+  }
+
+  .lines-table thead tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .lines-table thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 6px 10px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .lines-table tbody tr {
+    border-bottom: 1px solid rgba(42,48,69,0.5);
+    transition: background 0.1s;
+  }
+
+  .lines-table tbody tr:last-child { border-bottom: none; }
+  .lines-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  .lines-table tbody td {
+    padding: 9px 10px;
+    vertical-align: middle;
+  }
+
+  .part-number {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .material-info {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  .due-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .due-date.overdue { color: var(--overdue); }
+  .due-date.due-soon { color: var(--due-soon); }
+  .due-date.ok { color: var(--text2); }
+  .due-date.complete { color: var(--text3); }
+
+  /* STATUS SELECTOR */
+  .status-select {
+    font-family: var(--mono);
+    font-size: 11px;
+    border-radius: 4px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 130px;
+  }
+
+  .status-select.not-started {
+    background: rgba(85,96,128,0.15);
+    color: var(--s-not-started);
+    border-color: rgba(85,96,128,0.3);
+  }
+
+  .status-select.waiting {
+    background: rgba(243,156,18,0.12);
+    color: var(--s-waiting);
+    border-color: rgba(243,156,18,0.3);
+  }
+
+  .status-select.in-process {
+    background: rgba(74,158,255,0.12);
+    color: var(--s-in-process);
+    border-color: rgba(74,158,255,0.3);
+  }
+
+  .status-select.complete {
+    background: rgba(46,204,113,0.1);
+    color: var(--s-complete);
+    border-color: rgba(46,204,113,0.25);
+  }
+
+  .status-select:focus { outline: none; }
+
+  .saving-indicator {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-left: 6px;
+    display: none;
+  }
+
+  /* EMPTY / LOADING */
+  .loading-state, .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+    color: var(--text3);
+    text-align: center;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-state p, .empty-state p {
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  /* TRENDS SECTION */
+  .trends {
+    margin-top: 32px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+
+  .trends-header {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .trends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+  }
+
+  .trend-month {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .trend-month-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .trend-month-count {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .trend-month-bar {
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-top: 8px;
+    transition: width 0.3s;
+  }
+
+  /* CONFIG OVERLAY */
+  .config-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,17,23,0.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .config-overlay.open { display: flex; }
+
+  .config-box {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 28px;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .config-box h2 {
+    font-family: var(--mono);
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .config-box p {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .config-field { margin-bottom: 14px; }
+
+  .config-field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .config-field input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 4px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .config-field input:focus { outline: none; border-color: var(--accent); }
+
+  .config-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  .btn-save {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    flex: 1;
+    transition: background 0.15s;
+  }
+
+  .btn-save:hover { background: #2d7de0; }
+
+  .btn-cancel {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 10px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-cancel:hover { color: var(--text); }
+
+  @media (max-width: 600px) {
+    .header { padding: 12px 16px; }
+    .filters { padding: 10px 16px; }
+    .main { padding: 16px; }
+    .filter-search { width: 100%; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">BIC <span>/ Dashboard</span></div>
+  <div class="header-right">
+    <span class="last-updated" id="last-updated">—</span>
+    <button class="btn-refresh" onclick="loadData()">↺ Refresh</button>
+    <button class="btn-refresh" onclick="openConfig()">⚙ Settings</button>
+    <a href="index.html" class="btn-new">+ New PO</a>
+  </div>
+</div>
+
+<div class="filters">
+  <span class="filter-label">Status</span>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
+  <button class="filter-btn" data-filter="Not Started" onclick="setFilter('Not Started', this)">Not Started</button>
+  <button class="filter-btn" data-filter="Waiting on Material" onclick="setFilter('Waiting on Material', this)">Waiting on Material</button>
+  <button class="filter-btn" data-filter="In Process" onclick="setFilter('In Process', this)">In Process</button>
+  <button class="filter-btn" data-filter="Complete" onclick="setFilter('Complete', this)">Complete</button>
+  <input type="text" class="filter-search" id="search" placeholder="Search PO # or part..." oninput="renderDashboard()">
+</div>
+
+<div class="stats" id="stats-bar"></div>
+
+<div class="main">
+  <div id="dashboard-content">
+    <div class="loading-state"><div class="spinner"></div><p>Loading work orders...</p></div>
+  </div>
+
+  <div class="trends" id="trends-section" style="display:none">
+    <div class="trends-header">Parts completed by month</div>
+    <div class="trends-grid" id="trends-grid"></div>
+  </div>
+</div>
+
+<!-- CONFIG OVERLAY -->
+<div class="config-overlay" id="config-overlay">
+  <div class="config-box">
+    <h2>Dashboard Settings</h2>
+    <p>Enter your Apps Script Web App URL to connect to Google Sheets.</p>
+    <div class="config-field">
+      <label>Apps Script Web App URL</label>
+      <input type="text" id="cfg-script" placeholder="https://script.google.com/macros/s/...">
+    </div>
+    <div class="config-actions">
+      <button class="btn-cancel" onclick="closeConfig()">Cancel</button>
+      <button class="btn-save" onclick="saveConfig()">Save & Reload</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONFIG_KEY = 'bic_config';
+let allPOs = [];
+let allLines = [];
+let activeFilter = 'all';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function openConfig() {
+  const cfg = getConfig();
+  if (cfg.script) document.getElementById('cfg-script').value = cfg.script;
+  document.getElementById('config-overlay').classList.add('open');
+}
+
+function closeConfig() {
+  document.getElementById('config-overlay').classList.remove('open');
+}
+
+function saveConfig() {
+  const script = document.getElementById('cfg-script').value.trim();
+  if (!script) { alert('Please enter the Apps Script URL.'); return; }
+  const cfg = getConfig();
+  cfg.script = script;
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  closeConfig();
+  loadData();
+}
+
+// ── DATA LOADING ──────────────────────────────────────────────────────────────
+async function loadData() {
+  const cfg = getConfig();
+  if (!cfg.script) {
+    openConfig();
+    return;
+  }
+
+  document.getElementById('dashboard-content').innerHTML =
+    '<div class="loading-state"><div class="spinner"></div><p>Loading work orders...</p></div>';
+
+  try {
+    const url = cfg.script + '?action=getDashboardData&t=' + Date.now();
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!data.success) throw new Error(data.error || 'Unknown error');
+
+    allPOs = data.pos || [];
+    allLines = data.lineItems || [];
+
+    document.getElementById('last-updated').textContent =
+      'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+    renderStats();
+    renderDashboard();
+    renderTrends();
+
+  } catch (err) {
+    document.getElementById('dashboard-content').innerHTML =
+      `<div class="empty-state"><p>Failed to load: ${err.message}</p><p style="font-size:11px;margin-top:8px">Check your Apps Script URL in Settings.</p></div>`;
+  }
+}
+
+// ── STATUS HELPERS ────────────────────────────────────────────────────────────
+function statusClass(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'not started') return 'not-started';
+  if (s === 'waiting on material') return 'waiting';
+  if (s === 'in process') return 'in-process';
+  if (s === 'complete') return 'complete';
+  return 'not-started';
+}
+
+function dueDateClass(dateStr, status) {
+  if ((status || '').toLowerCase() === 'complete') return 'complete';
+  if (!dateStr) return 'ok';
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return 'ok';
+  let [m, d, y] = parts;
+  if (y.length === 2) y = '20' + y;
+  const due = new Date(y, m - 1, d);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.ceil((due - today) / 86400000);
+  if (diff < 0) return 'overdue';
+  if (diff <= 7) return 'due-soon';
+  return 'ok';
+}
+
+function earliestDue(lines) {
+  let earliest = null;
+  lines.forEach(l => {
+    const cls = dueDateClass(l.dueDate, l.status);
+    if (!earliest) { earliest = cls; return; }
+    if (cls === 'overdue') earliest = 'overdue';
+    else if (cls === 'due-soon' && earliest !== 'overdue') earliest = 'due-soon';
+  });
+  return earliest || 'ok';
+}
+
+function worstStatus(lines) {
+  const order = ['not-started', 'waiting', 'in-process', 'complete'];
+  let worst = 'complete';
+  lines.forEach(l => {
+    const sc = statusClass(l.status);
+    if (order.indexOf(sc) < order.indexOf(worst)) worst = sc;
+  });
+  return worst;
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const total = allLines.length;
+  const overdue = allLines.filter(l => dueDateClass(l.dueDate, l.status) === 'overdue').length;
+  const inProc = allLines.filter(l => statusClass(l.status) === 'in-process').length;
+  const waiting = allLines.filter(l => statusClass(l.status) === 'waiting').length;
+  const complete = allLines.filter(l => statusClass(l.status) === 'complete').length;
+
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat"><div class="stat-value">${allPOs.length}</div><div class="stat-label">Open POs</div></div>
+    <div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Total Lines</div></div>
+    <div class="stat"><div class="stat-value overdue">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat"><div class="stat-value in-process">${inProc}</div><div class="stat-label">In Process</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--s-waiting)">${waiting}</div><div class="stat-label">Waiting Mat.</div></div>
+    <div class="stat"><div class="stat-value complete">${complete}</div><div class="stat-label">Complete</div></div>
+  `;
+}
+
+// ── FILTER ────────────────────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashboard();
+}
+
+// ── DASHBOARD RENDER ──────────────────────────────────────────────────────────
+function renderDashboard() {
+  const search = (document.getElementById('search')?.value || '').toLowerCase();
+
+  let pos = [...allPOs];
+
+  // Sort by earliest due date
+  pos.sort((a, b) => {
+    const linesA = allLines.filter(l => String(l.poNumber) === String(a.poNumber));
+    const linesB = allLines.filter(l => String(l.poNumber) === String(b.poNumber));
+    const urgency = { overdue: 0, 'due-soon': 1, ok: 2, complete: 3 };
+    return urgency[earliestDue(linesA)] - urgency[earliestDue(linesB)];
+  });
+
+  const content = document.getElementById('dashboard-content');
+
+  if (pos.length === 0) {
+    content.innerHTML = '<div class="empty-state"><p>No work orders yet.</p><p style="font-size:11px;margin-top:8px">Use the capture app to add your first PO.</p></div>';
+    return;
+  }
+
+  const cards = [];
+
+  pos.forEach(po => {
+    const lines = allLines.filter(l => String(l.poNumber) === String(po.poNumber));
+
+    // Apply status filter
+    if (activeFilter !== 'all') {
+      const hasMatch = lines.some(l => l.status === activeFilter);
+      if (!hasMatch) return;
+    }
+
+    // Apply search
+    if (search) {
+      const match = String(po.poNumber).toLowerCase().includes(search) ||
+        (po.orderDescription || '').toLowerCase().includes(search) ||
+        lines.some(l => (l.partNumber || '').toLowerCase().includes(search));
+      if (!match) return;
+    }
+
+    const dueClass = earliestDue(lines);
+    const allComplete = lines.every(l => statusClass(l.status) === 'complete');
+
+    let cardClass = 'po-card';
+    if (allComplete) cardClass += ' all-complete';
+    else if (dueClass === 'overdue') cardClass += ' overdue';
+    else if (dueClass === 'due-soon') cardClass += ' due-soon';
+
+    const dots = lines.map(l =>
+      `<div class="progress-dot ${statusClass(l.status)}" title="${l.partNumber}: ${l.status}"></div>`
+    ).join('');
+
+    const dueBadge = allComplete
+      ? `<span class="po-date-badge complete">✓ Complete</span>`
+      : dueClass === 'overdue'
+        ? `<span class="po-date-badge overdue">⚠ Overdue</span>`
+        : dueClass === 'due-soon'
+          ? `<span class="po-date-badge due-soon">Due Soon</span>`
+          : `<span class="po-date-badge ok">On Track</span>`;
+
+    const notesHtml = po.handwrittenNotes
+      ? `<div class="po-notes">⚠ Note: ${esc(po.handwrittenNotes)}</div>` : '';
+
+    const lineRows = lines.map(l => {
+      const dc = dueDateClass(l.dueDate, l.status);
+      const sc = statusClass(l.status);
+      const matInfo = l.materialPartNumber
+        ? `<div class="material-info">${esc(l.materialPartNumber)} · ${esc(l.materialDescription)} · ${l.materialUsed ? l.materialUsed + '"' : ''} total${l.materialPerPart ? ' / ' + l.materialPerPart + '" ea' : ''}</div>`
+        : '';
+
+      return `
+        <tr>
+          <td style="color:var(--text3);font-family:var(--mono);font-size:11px">${esc(l.line)}</td>
+          <td>
+            <div class="part-number">${esc(l.partNumber)}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">${esc(l.description)}</div>
+            ${matInfo}
+          </td>
+          <td style="font-family:var(--mono);font-size:12px;text-align:center">${l.qty}</td>
+          <td><span class="due-date ${dc}">${esc(l.dueDate) || '—'}</span></td>
+          <td>
+            <select class="status-select ${sc}" onchange="updateStatus('${esc(po.poNumber)}','${esc(l.line)}',this)">
+              <option ${l.status==='Not Started'?'selected':''}>Not Started</option>
+              <option ${l.status==='Waiting on Material'?'selected':''}>Waiting on Material</option>
+              <option ${l.status==='In Process'?'selected':''}>In Process</option>
+              <option ${l.status==='Complete'?'selected':''}>Complete</option>
+            </select>
+            <span class="saving-indicator" id="saving-${esc(po.poNumber)}-${esc(l.line)}">saving...</span>
+          </td>
+          <td style="font-size:12px;color:var(--text2)">${esc(l.notes)}</td>
+        </tr>`;
+    }).join('');
+
+    cards.push(`
+      <div class="${cardClass}" id="po-${esc(po.poNumber)}">
+        <div class="po-card-header" onclick="toggleCard('${esc(po.poNumber)}')">
+          <div class="po-meta">
+            <span class="po-number">PO #${esc(po.poNumber)}</span>
+            <span class="po-desc">${esc(po.orderDescription)}</span>
+            <span class="po-by">${esc(po.orderedBy)}</span>
+          </div>
+          <div class="po-card-right">
+            ${dueBadge}
+            <div class="po-progress">${dots}</div>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        ${notesHtml}
+        <div class="po-lines">
+          <table class="lines-table">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th>Part / Description / Material</th>
+                <th style="width:48px">Qty</th>
+                <th style="width:90px">Due Date</th>
+                <th style="width:160px">Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>${lineRows}</tbody>
+          </table>
+        </div>
+      </div>`);
+  });
+
+  if (cards.length === 0) {
+    content.innerHTML = '<div class="empty-state"><p>No matching work orders.</p></div>';
+  } else {
+    content.innerHTML = '<div class="po-list">' + cards.join('') + '</div>';
+  }
+}
+
+function esc(val) {
+  if (val === null || val === undefined) return '';
+  return String(val)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toggleCard(poNum) {
+  const card = document.getElementById('po-' + poNum);
+  if (card) card.classList.toggle('expanded');
+}
+
+// ── STATUS UPDATE ─────────────────────────────────────────────────────────────
+async function updateStatus(poNumber, line, selectEl) {
+  const cfg = getConfig();
+  if (!cfg.script) return;
+
+  const newStatus = selectEl.value;
+  const sc = statusClass(newStatus);
+  selectEl.className = 'status-select ' + sc;
+
+  const savingId = `saving-${poNumber}-${line}`;
+  const indicator = document.getElementById(savingId);
+  if (indicator) indicator.style.display = 'inline';
+
+  // Update local data
+  const item = allLines.find(l => String(l.poNumber) === String(poNumber) && String(l.line) === String(line));
+  if (item) item.status = newStatus;
+
+  try {
+    const resp = await fetch(cfg.script, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateStatus', poNumber, line, status: newStatus })
+    });
+    const result = await resp.json();
+    if (!result.success) throw new Error(result.error);
+    renderStats();
+  } catch (err) {
+    alert('Failed to save status: ' + err.message);
+  } finally {
+    if (indicator) indicator.style.display = 'none';
+  }
+}
+
+// ── TRENDS ────────────────────────────────────────────────────────────────────
+function renderTrends() {
+  const completed = allLines.filter(l => statusClass(l.status) === 'complete');
+  if (completed.length === 0) {
+    document.getElementById('trends-section').style.display = 'none';
+    return;
+  }
+
+  // Group by month using PO date (approximate — uses date added)
+  const byMonth = {};
+  allPOs.forEach(po => {
+    const dateStr = po.dateAdded || po.poDate || '';
+    if (!dateStr) return;
+    const parts = dateStr.split('/');
+    if (parts.length < 2) return;
+    let [m, , y] = parts;
+    if (!y) return;
+    if (y.length === 2) y = '20' + y;
+    const key = y + '-' + String(m).padStart(2,'0');
+    const lines = allLines.filter(l => String(l.poNumber) === String(po.poNumber) && statusClass(l.status) === 'complete');
+    byMonth[key] = (byMonth[key] || 0) + lines.length;
+  });
+
+  const keys = Object.keys(byMonth).sort();
+  if (keys.length === 0) {
+    document.getElementById('trends-section').style.display = 'none';
+    return;
+  }
+
+  const max = Math.max(...Object.values(byMonth));
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const html = keys.map(k => {
+    const [y, m] = k.split('-');
+    const label = monthNames[parseInt(m)-1] + ' ' + y.slice(2);
+    const count = byMonth[k];
+    const barWidth = max > 0 ? Math.round((count / max) * 100) : 0;
+    return `
+      <div class="trend-month">
+        <div class="trend-month-label">${label}</div>
+        <div class="trend-month-count">${count}</div>
+        <div class="trend-month-bar" style="width:${barWidth}%"></div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('trends-grid').innerHTML = html;
+  document.getElementById('trends-section').style.display = 'block';
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const cfg = getConfig();
+  if (!cfg.script) {
+    openConfig();
+  } else {
+    loadData();
+  }
+});
+</script>
+</body>
+</html>
