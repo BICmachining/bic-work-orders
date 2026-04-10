@@ -36,7 +36,6 @@
     overflow-x: hidden;
   }
 
-  /* HEADER */
   .header {
     display: flex;
     align-items: center;
@@ -58,16 +57,8 @@
     text-transform: uppercase;
   }
 
-  .logo span {
-    color: var(--text2);
-    font-weight: 400;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
+  .logo span { color: var(--text2); font-weight: 400; }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
 
   .btn-dash {
     font-family: var(--mono);
@@ -81,12 +72,8 @@
     transition: all 0.15s;
   }
 
-  .btn-dash:hover {
-    color: var(--text);
-    border-color: var(--accent);
-  }
+  .btn-dash:hover { color: var(--text); border-color: var(--accent); }
 
-  /* SCREENS */
   .screen { display: none; }
   .screen.active { display: block; }
 
@@ -95,145 +82,142 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     min-height: calc(100vh - 57px);
-    padding: 40px 20px;
-    gap: 32px;
+    padding: 28px 20px 40px;
+    gap: 20px;
   }
 
-  #screen-capture.active {
-    display: flex;
-  }
+  #screen-capture.active { display: flex; }
 
-  .capture-title {
-    text-align: center;
-  }
+  .capture-title { text-align: center; }
 
   .capture-title h1 {
     font-family: var(--mono);
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
     color: var(--text);
     letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .capture-title p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* PAGE QUEUE */
+  .page-queue { width: 100%; max-width: 500px; }
+
+  .queue-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
     margin-bottom: 8px;
   }
 
-  .capture-title p {
-    font-size: 14px;
-    color: var(--text2);
-    line-height: 1.6;
+  .queue-items { display: flex; flex-direction: column; gap: 8px; }
+
+  .queue-empty {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+    padding: 12px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
   }
 
-  .capture-zone {
-    width: 100%;
-    max-width: 400px;
-    aspect-ratio: 3/4;
-    border: 2px dashed var(--border2);
-    border-radius: 12px;
+  .queue-item {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-    background: var(--bg2);
-  }
-
-  .capture-zone:hover {
-    border-color: var(--accent);
-    background: rgba(74, 158, 255, 0.04);
-  }
-
-  .capture-zone.has-image {
-    border-style: solid;
-    border-color: var(--accent);
-  }
-
-  .capture-zone img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 10px;
-  }
-
-  .capture-zone-content {
-    display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 12px;
-    z-index: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: border-color 0.15s;
   }
 
-  .capture-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--bg3);
+  .queue-item:hover { border-color: var(--border2); }
+
+  .queue-thumb {
+    width: 40px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 3px;
     border: 1px solid var(--border2);
+    flex-shrink: 0;
+  }
+
+  .queue-info { flex: 1; min-width: 0; }
+
+  .queue-page-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 2px;
+  }
+
+  .queue-filename {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .queue-remove {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.1s;
+    flex-shrink: 0;
+  }
+
+  .queue-remove:hover { color: var(--red); background: rgba(231,76,60,0.1); }
+
+  /* ADD PAGE BUTTON */
+  .btn-add-page {
+    width: 100%;
+    max-width: 500px;
+    border: 2px dashed var(--border2);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
   }
 
-  .capture-icon svg {
-    width: 28px;
-    height: 28px;
-    stroke: var(--accent);
+  .btn-add-page:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(74,158,255,0.04);
+  }
+
+  .btn-add-page svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
     fill: none;
-    stroke-width: 1.5;
+    stroke-width: 2.5;
     stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .capture-zone p {
-    font-size: 13px;
-    color: var(--text2);
-    text-align: center;
-    font-family: var(--mono);
   }
 
   #file-input { display: none; }
-
-  .capture-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(15, 17, 23, 0.7);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    z-index: 2;
-    backdrop-filter: blur(2px);
-  }
-
-  .capture-overlay p {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text);
-  }
-
-  .btn-change {
-    font-family: var(--mono);
-    font-size: 11px;
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    color: var(--text2);
-    padding: 6px 14px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .btn-change:hover {
-    color: var(--text);
-    border-color: var(--accent);
-  }
 
   .btn-primary {
     font-family: var(--mono);
@@ -247,7 +231,7 @@
     border-radius: 6px;
     cursor: pointer;
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     transition: all 0.15s;
     display: flex;
     align-items: center;
@@ -255,16 +239,8 @@
     gap: 8px;
   }
 
-  .btn-primary:hover:not(:disabled) {
-    background: var(--accent2);
-    transform: translateY(-1px);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent2); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
   .btn-secondary {
     font-family: var(--mono);
@@ -278,12 +254,9 @@
     transition: all 0.15s;
   }
 
-  .btn-secondary:hover {
-    border-color: var(--text2);
-    color: var(--text);
-  }
+  .btn-secondary:hover { border-color: var(--text2); color: var(--text); }
 
-  /* PROCESSING SCREEN */
+  /* PROCESSING */
   #screen-processing {
     display: none;
     flex-direction: column;
@@ -321,7 +294,14 @@
     margin-bottom: 6px;
   }
 
-  /* REVIEW SCREEN */
+  .processing-pages {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 6px;
+  }
+
+  /* REVIEW */
   #screen-review {
     display: none;
     padding: 20px;
@@ -347,19 +327,9 @@
     color: var(--text);
   }
 
-  .review-header p {
-    font-size: 12px;
-    color: var(--text2);
-    margin-top: 4px;
-  }
+  .review-header p { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .review-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-  .review-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  /* PO HEADER SECTION */
   .section-label {
     font-family: var(--mono);
     font-size: 10px;
@@ -381,11 +351,7 @@
     margin-bottom: 24px;
   }
 
-  .field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
 
   .field-group label {
     font-family: var(--mono);
@@ -416,10 +382,9 @@
 
   .field-group.wide { grid-column: 1 / -1; }
 
-  /* HANDWRITTEN NOTES - highlighted */
   .notes-highlight {
-    background: rgba(243, 156, 18, 0.08);
-    border: 1px solid rgba(243, 156, 18, 0.3);
+    background: rgba(243,156,18,0.08);
+    border: 1px solid rgba(243,156,18,0.3);
     border-radius: 4px;
     padding: 8px 10px;
     font-family: var(--mono);
@@ -428,7 +393,6 @@
     font-style: italic;
   }
 
-  /* LINE ITEMS TABLE */
   .table-wrapper {
     overflow-x: auto;
     border: 1px solid var(--border);
@@ -436,17 +400,8 @@
     margin-bottom: 24px;
   }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    min-width: 900px;
-  }
-
-  thead tr {
-    background: var(--bg3);
-    border-bottom: 1px solid var(--border2);
-  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 900px; }
+  thead tr { background: var(--bg3); border-bottom: 1px solid var(--border2); }
 
   thead th {
     font-family: var(--mono);
@@ -460,18 +415,10 @@
     white-space: nowrap;
   }
 
-  tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.1s;
-  }
-
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: rgba(255,255,255,0.02); }
-
-  tbody td {
-    padding: 6px 4px;
-    vertical-align: middle;
-  }
+  tbody td { padding: 6px 4px; vertical-align: middle; }
 
   tbody td input {
     font-family: var(--mono);
@@ -485,16 +432,8 @@
     transition: all 0.1s;
   }
 
-  tbody td input:focus {
-    outline: none;
-    background: var(--bg3);
-    border-color: var(--accent);
-  }
-
-  tbody td input:hover:not(:focus) {
-    border-color: var(--border2);
-    background: var(--bg2);
-  }
+  tbody td input:focus { outline: none; background: var(--bg3); border-color: var(--accent); }
+  tbody td input:hover:not(:focus) { border-color: var(--border2); background: var(--bg2); }
 
   .col-line { width: 48px; }
   .col-pn { width: 160px; }
@@ -519,10 +458,7 @@
     transition: all 0.1s;
   }
 
-  .btn-del:hover {
-    color: var(--red);
-    background: rgba(231, 76, 60, 0.1);
-  }
+  .btn-del:hover { color: var(--red); background: rgba(231,76,60,0.1); }
 
   .mat-per-computed {
     font-family: var(--mono);
@@ -532,7 +468,6 @@
     white-space: nowrap;
   }
 
-  /* STATUS BAR */
   .status-bar {
     font-family: var(--mono);
     font-size: 12px;
@@ -543,25 +478,20 @@
   }
 
   .status-bar.error {
-    background: rgba(231, 76, 60, 0.1);
-    border: 1px solid rgba(231, 76, 60, 0.3);
+    background: rgba(231,76,60,0.1);
+    border: 1px solid rgba(231,76,60,0.3);
     color: var(--red);
     display: block;
   }
 
   .status-bar.success {
-    background: rgba(46, 204, 113, 0.1);
-    border: 1px solid rgba(46, 204, 113, 0.3);
+    background: rgba(46,204,113,0.1);
+    border: 1px solid rgba(46,204,113,0.3);
     color: var(--green);
     display: block;
   }
 
-  .submit-row {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  }
+  .submit-row { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
 
   .btn-submit {
     font-family: var(--mono);
@@ -580,18 +510,10 @@
     gap: 8px;
   }
 
-  .btn-submit:hover:not(:disabled) {
-    background: #27ae60;
-    transform: translateY(-1px);
-  }
+  .btn-submit:hover:not(:disabled) { background: #27ae60; transform: translateY(-1px); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-  .btn-submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* SUCCESS SCREEN */
+  /* SUCCESS */
   #screen-success {
     display: none;
     flex-direction: column;
@@ -609,7 +531,7 @@
     width: 72px;
     height: 72px;
     border-radius: 50%;
-    background: rgba(46, 204, 113, 0.1);
+    background: rgba(46,204,113,0.1);
     border: 2px solid var(--green);
     display: flex;
     align-items: center;
@@ -626,18 +548,8 @@
     stroke-linejoin: round;
   }
 
-  .success-po {
-    font-family: var(--mono);
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .success-detail {
-    font-size: 14px;
-    color: var(--text2);
-    line-height: 1.6;
-  }
+  .success-po { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--text); }
+  .success-detail { font-size: 14px; color: var(--text2); line-height: 1.6; }
 
   .success-actions {
     display: flex;
@@ -647,7 +559,7 @@
     margin-top: 8px;
   }
 
-  /* CONFIG SCREEN */
+  /* CONFIG */
   #screen-config {
     display: none;
     flex-direction: column;
@@ -669,25 +581,9 @@
     max-width: 480px;
   }
 
-  .config-box h2 {
-    font-family: var(--mono);
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-
-  .config-box p {
-    font-size: 13px;
-    color: var(--text2);
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-
-  .config-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
+  .config-box h2 { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .config-box p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+  .config-fields { display: flex; flex-direction: column; gap: 14px; }
 
   .config-field label {
     display: block;
@@ -711,20 +607,12 @@
     transition: border-color 0.15s;
   }
 
-  .config-field input:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+  .config-field input:focus { outline: none; border-color: var(--accent); }
 
-  /* RESPONSIVE */
   @media (max-width: 600px) {
     .review-header { flex-direction: column; align-items: flex-start; }
     .submit-row { justify-content: stretch; }
     .btn-submit, .btn-secondary { width: 100%; justify-content: center; }
-  }
-
-  @media (orientation: landscape) and (max-height: 600px) {
-    .capture-zone { aspect-ratio: 4/3; max-width: 300px; }
   }
 </style>
 </head>
@@ -761,17 +649,20 @@
 <div id="screen-capture" class="screen">
   <div class="capture-title">
     <h1>New Purchase Order</h1>
-    <p>Take a photo of the PO or select from your camera roll.</p>
+    <p>Add each page of the PO in order, then tap Read.</p>
   </div>
 
-  <div class="capture-zone" id="capture-zone" onclick="document.getElementById('file-input').click()">
-    <div class="capture-zone-content" id="capture-content">
-      <div class="capture-icon">
-        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      </div>
-      <p>Tap to take photo<br>or select from gallery</p>
+  <div class="page-queue" id="page-queue">
+    <div class="queue-label">Pages &mdash; <span id="page-count">0 added</span></div>
+    <div class="queue-items" id="queue-items">
+      <div class="queue-empty">No pages added yet</div>
     </div>
   </div>
+
+  <button class="btn-add-page" id="btn-add-page" onclick="document.getElementById('file-input').click()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Page
+  </button>
 
   <input type="file" id="file-input" accept="image/*" capture="environment">
 
@@ -780,7 +671,7 @@
     Read PO with AI
   </button>
 
-  <button class="btn-secondary" onclick="showConfig()">⚙ Settings</button>
+  <button class="btn-secondary" onclick="showConfig()">&#9881; Settings</button>
 </div>
 
 <!-- PROCESSING SCREEN -->
@@ -788,7 +679,8 @@
   <div class="spinner"></div>
   <div class="processing-text">
     <strong>Reading your PO...</strong>
-    Gemini is extracting the data. This takes about 10 seconds.
+    Gemini is extracting the data across all pages.
+    <div class="processing-pages" id="processing-pages"></div>
   </div>
 </div>
 
@@ -800,7 +692,7 @@
       <p>Edit any field before saving. Click any cell to modify.</p>
     </div>
     <div class="review-actions">
-      <button class="btn-secondary" onclick="showCapture()">← Retake Photo</button>
+      <button class="btn-secondary" onclick="showCapture()">&#8592; Retake Photos</button>
     </div>
   </div>
 
@@ -823,7 +715,7 @@
       <input type="text" id="f-orderDesc" placeholder="End Tanks for Welch PO 31379">
     </div>
     <div class="field-group wide" id="notes-group" style="display:none;">
-      <label>⚠ Handwritten Notes</label>
+      <label>&#9888; Handwritten Notes</label>
       <div class="notes-highlight" id="f-notes"></div>
     </div>
   </div>
@@ -874,7 +766,7 @@
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────────
+// ── CONFIG ───────────────────────────────────────────────────────────────────
 const CONFIG_KEY = 'bic_config';
 
 function getConfig() {
@@ -900,7 +792,7 @@ function showConfig() {
   showScreen('config');
 }
 
-// ── SCREENS ─────────────────────────────────────────────────────────────────
+// ── SCREENS ──────────────────────────────────────────────────────────────────
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
@@ -908,7 +800,6 @@ function showScreen(name) {
 
 function showCapture() { showScreen('capture'); }
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
   const cfg = getConfig();
   if (!cfg.gemini || !cfg.script) {
@@ -918,9 +809,46 @@ window.addEventListener('load', () => {
   }
 });
 
-// ── FILE INPUT ────────────────────────────────────────────────────────────────
-let currentImageBase64 = null;
+// ── PAGE QUEUE ───────────────────────────────────────────────────────────────
+let pages = []; // array of { base64, filename, dataUrl }
 
+function updateQueueUI() {
+  const container = document.getElementById('queue-items');
+  const countEl = document.getElementById('page-count');
+  const extractBtn = document.getElementById('btn-extract');
+
+  countEl.textContent = pages.length + ' added';
+  extractBtn.disabled = pages.length === 0;
+
+  if (pages.length === 0) {
+    container.innerHTML = '<div class="queue-empty">No pages added yet</div>';
+    return;
+  }
+
+  container.innerHTML = pages.map((p, i) => `
+    <div class="queue-item" id="qitem-${i}">
+      <img class="queue-thumb" src="${p.dataUrl}" alt="Page ${i+1}">
+      <div class="queue-info">
+        <div class="queue-page-num">Page ${i + 1}</div>
+        <div class="queue-filename">${esc(p.filename)}</div>
+      </div>
+      <button class="queue-remove" onclick="removePage(${i})" title="Remove page">&times;</button>
+    </div>
+  `).join('');
+}
+
+function removePage(idx) {
+  pages.splice(idx, 1);
+  updateQueueUI();
+}
+
+function resetCapture() {
+  pages = [];
+  document.getElementById('file-input').value = '';
+  updateQueueUI();
+}
+
+// ── FILE INPUT ───────────────────────────────────────────────────────────────
 document.getElementById('file-input').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -928,60 +856,38 @@ document.getElementById('file-input').addEventListener('change', function(e) {
   const reader = new FileReader();
   reader.onload = function(ev) {
     const dataUrl = ev.target.result;
-    currentImageBase64 = dataUrl.split(',')[1];
-
-    const zone = document.getElementById('capture-zone');
-    zone.classList.add('has-image');
-
-    // Show image preview
-    let img = zone.querySelector('img');
-    if (!img) { img = document.createElement('img'); zone.appendChild(img); }
-    img.src = dataUrl;
-
-    // Show overlay
-    let overlay = zone.querySelector('.capture-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'capture-overlay';
-      overlay.innerHTML = '<p>Photo selected</p><button class="btn-change" onclick="event.stopPropagation();document.getElementById(\'file-input\').click()">Change Photo</button>';
-      zone.appendChild(overlay);
-    }
-
-    document.getElementById('btn-extract').disabled = false;
+    const base64 = dataUrl.split(',')[1];
+    pages.push({ base64, filename: file.name, dataUrl });
+    updateQueueUI();
   };
   reader.readAsDataURL(file);
+
+  // Reset so same file can be added again if needed
+  this.value = '';
 });
 
-function resetCapture() {
-  currentImageBase64 = null;
-  document.getElementById('file-input').value = '';
-  const zone = document.getElementById('capture-zone');
-  zone.classList.remove('has-image');
-  const img = zone.querySelector('img');
-  if (img) img.remove();
-  const overlay = zone.querySelector('.capture-overlay');
-  if (overlay) overlay.remove();
-  document.getElementById('btn-extract').disabled = true;
-}
-
-// ── GEMINI EXTRACTION ─────────────────────────────────────────────────────────
+// ── GEMINI EXTRACTION ────────────────────────────────────────────────────────
 async function extractData() {
-  if (!currentImageBase64) return;
+  if (pages.length === 0) return;
   const cfg = getConfig();
   if (!cfg.gemini) { showConfig(); return; }
 
   showScreen('processing');
+  document.getElementById('processing-pages').textContent =
+    pages.length === 1 ? '1 page' : pages.length + ' pages';
 
   const prompt = `You are extracting data from a Bell Intercoolers LLC Purchase Order document.
+This PO may span multiple pages. The header (PO Number, Date, etc.) repeats on each page — use page 1 for header data.
+Line items are numbered sequentially across all pages (001, 002, 003...) — collect ALL of them.
 
-Extract the following and return ONLY valid JSON, no markdown, no explanation:
+Return ONLY valid JSON, no markdown, no explanation:
 
 {
   "poNumber": "string - the PO Number from the header",
   "poDate": "string - PO Date as shown",
   "orderedBy": "string - initials from Ordered By field",
   "orderDescription": "string - the Order Desc field text",
-  "handwrittenNotes": "string - any handwritten text visible on the document, empty string if none",
+  "handwrittenNotes": "string - any handwritten text visible anywhere in the document, empty string if none",
   "lineItems": [
     {
       "line": "string - line number e.g. 001",
@@ -989,7 +895,7 @@ Extract the following and return ONLY valid JSON, no markdown, no explanation:
       "qty": "number - the order quantity (positive number, from the main line, not M1)",
       "description": "string - full multi-line description of the part",
       "materialPartNumber": "string - part number from the M1 sub-line e.g. M00105-0064-ALU",
-      "materialDescription": "string - description from the M1 sub-line e.g. FLAT,Alu,1.00 x10.00",
+      "materialDescription": "string - description from the M1 sub-line e.g. FLAT,Alu,1.00x10.00",
       "materialUsed": "number - the absolute value of the negative quantity from the M1 line (inches consumed total)",
       "dueDate": "string - Dt Req'd date for this line item"
     }
@@ -1000,8 +906,16 @@ Rules:
 - Only include numbered line items (001, 002, 003...) — each as one object
 - The M1 sub-line below each numbered line is the material — fold it into that line item
 - materialUsed should be positive (e.g. if M1 shows -9.00, materialUsed = 9.00)
+- Collect line items from ALL pages — do not stop at the end of page 1
 - If a field is not found, use empty string
 - Return only the JSON object, nothing else`;
+
+  // Build parts array: prompt text + all page images
+  const parts = [{ text: prompt }];
+  pages.forEach((p, i) => {
+    parts.push({ text: `--- Page ${i + 1} of ${pages.length} ---` });
+    parts.push({ inline_data: { mime_type: 'image/jpeg', data: p.base64 } });
+  });
 
   try {
     const response = await fetch(
@@ -1010,13 +924,8 @@ Rules:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: 'image/jpeg', data: currentImageBase64 } }
-            ]
-          }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+          contents: [{ parts }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 4096 }
         })
       }
     );
@@ -1028,7 +937,6 @@ Rules:
     }
 
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    // Strip any markdown fences
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
     const data = JSON.parse(text);
@@ -1041,7 +949,7 @@ Rules:
   }
 }
 
-// ── REVIEW POPULATION ─────────────────────────────────────────────────────────
+// ── REVIEW POPULATION ────────────────────────────────────────────────────────
 function populateReview(data) {
   document.getElementById('f-poNumber').value = data.poNumber || '';
   document.getElementById('f-poDate').value = data.poDate || '';
@@ -1084,16 +992,16 @@ function createLineRow(item, idx) {
     <td class="col-matpn"><input type="text" value="${esc(item.materialPartNumber)}" data-field="materialPartNumber" style="color:var(--text2)"></td>
     <td class="col-matdesc"><input type="text" value="${esc(item.materialDescription)}" data-field="materialDescription" style="color:var(--text2)"></td>
     <td class="col-matused"><input type="number" value="${matUsed || ''}" data-field="materialUsed" onchange="recalcPerPart(this)" step="0.001"></td>
-    <td class="col-matper"><span class="mat-per-computed" id="perpart-${idx}">${perPart ? perPart + '"' : '—'}</span></td>
+    <td class="col-matper"><span class="mat-per-computed" id="perpart-${idx}">${perPart ? perPart + '"' : '&mdash;'}</span></td>
     <td class="col-due"><input type="text" value="${esc(item.dueDate)}" data-field="dueDate"></td>
-    <td class="col-del"><button class="btn-del" onclick="deleteRow(this)" title="Remove line">×</button></td>
+    <td class="col-del"><button class="btn-del" onclick="deleteRow(this)" title="Remove line">&times;</button></td>
   `;
   return tr;
 }
 
 function esc(val) {
   if (val === null || val === undefined) return '';
-  return String(val).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  return String(val).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
 function recalcPerPart(input) {
@@ -1103,7 +1011,7 @@ function recalcPerPart(input) {
   const matUsed = parseFloat(tr.querySelector('[data-field="materialUsed"]').value) || 0;
   const perPart = qty > 0 && matUsed > 0 ? (matUsed / qty).toFixed(3) : '';
   const el = document.getElementById('perpart-' + idx);
-  if (el) el.textContent = perPart ? perPart + '"' : '—';
+  if (el) el.textContent = perPart ? perPart + '"' : '\u2014';
 }
 
 function deleteRow(btn) {
@@ -1111,7 +1019,7 @@ function deleteRow(btn) {
   btn.closest('tr').remove();
 }
 
-// ── SUBMIT ────────────────────────────────────────────────────────────────────
+// ── SUBMIT ───────────────────────────────────────────────────────────────────
 function setStatus(msg, type) {
   const bar = document.getElementById('status-bar');
   bar.textContent = msg;
@@ -1170,7 +1078,6 @@ async function submitPO() {
   try {
     const url = cfg.script + '?action=submitPO&po=' + encodeURIComponent(JSON.stringify(po)) + '&lineItems=' + encodeURIComponent(JSON.stringify(lineItems));
     const response = await fetch(url);
-
     const result = await response.json();
 
     if (result.success) {
