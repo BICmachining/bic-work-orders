@@ -975,10 +975,7 @@ async function updateStatus(poNumber, line, selectEl) {
   if (item) item.status = newStatus;
 
   try {
-    const resp = await fetch(cfg.script, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'updateStatus', poNumber, line, status: newStatus })
-    });
+    const resp = await fetch(cfg.script + '?action=updateStatus&poNumber=' + encodeURIComponent(poNumber) + '&line=' + encodeURIComponent(line) + '&status=' + encodeURIComponent(newStatus));
     const result = await resp.json();
     if (!result.success) throw new Error(result.error);
     renderStats();
