@@ -1168,10 +1168,8 @@ async function submitPO() {
   setStatus('', '');
 
   try {
-    const response = await fetch(cfg.script, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'submitPO', po, lineItems })
-    });
+    const url = cfg.script + '?action=submitPO&po=' + encodeURIComponent(JSON.stringify(po)) + '&lineItems=' + encodeURIComponent(JSON.stringify(lineItems));
+    const response = await fetch(url);
 
     const result = await response.json();
 
