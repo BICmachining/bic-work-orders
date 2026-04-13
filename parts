@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIC Work Orders — Parts</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #171b24;
+    --bg3: #1e2433;
+    --border: #2a3045;
+    --border2: #3a4460;
+    --text: #e8ecf4;
+    --text2: #8b95b0;
+    --text3: #556080;
+    --accent: #4a9eff;
+    --accent2: #2d7de0;
+    --green: #2ecc71;
+    --yellow: #f39c12;
+    --red: #e74c3c;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  body.light {
+    --bg: #f4f5f7;
+    --bg2: #ffffff;
+    --bg3: #ebedf2;
+    --border: #d0d4df;
+    --border2: #b0b8cc;
+    --text: #1a1d27;
+    --text2: #4a5068;
+    --text3: #8090b0;
+    --accent: #1a6fd4;
+    --accent2: #1458b0;
+    --green: #1a9e50;
+    --yellow: #c47d08;
+    --red: #c0392b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--text2); font-weight: 400; }
+
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .hdr-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .hdr-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .hdr-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .hdr-btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  /* MAIN LAYOUT */
+  .main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+  /* SEARCH BAR */
+  .search-section { margin-bottom: 24px; }
+
+  .search-box-wrap {
+    position: relative;
+    max-width: 600px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  .search-box {
+    font-family: var(--sans);
+    font-size: 15px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 13px 16px 13px 42px;
+    border-radius: 8px;
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .search-box:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74,158,255,0.12);
+  }
+
+  .search-hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 8px;
+  }
+
+  /* INDEX VIEW */
+  #view-index { display: block; }
+  #view-detail { display: none; }
+
+  .results-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* RESULT TABS */
+  .result-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 5px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tab-btn:hover { border-color: var(--border2); color: var(--text); }
+  .tab-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(74,158,255,0.08); }
+
+  /* PART CARDS (index) */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+
+  .result-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .result-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+  .rc-pn {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .rc-desc {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .rc-meta {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .rc-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .rc-meta-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+
+  .rc-meta-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  /* MATERIAL CARDS (index) */
+  .material-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .material-card:hover { border-color: var(--accent); border-left-color: var(--accent); transform: translateY(-1px); }
+
+  .mc-pn {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--yellow);
+    margin-bottom: 4px;
+  }
+
+  .mc-desc {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 10px;
+  }
+
+  /* EMPTY */
+  .no-results {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text3);
+    padding: 40px 0;
+    text-align: center;
+  }
+
+  /* LOADING */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 16px;
+    color: var(--text3);
+    text-align: center;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-state p { font-family: var(--mono); font-size: 13px; }
+
+  /* DETAIL VIEW */
+  .detail-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: all 0.15s;
+    background: none;
+  }
+
+  .detail-back:hover { color: var(--text); border-color: var(--accent); }
+
+  /* SUMMARY CARD */
+  .summary-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+
+  .summary-pn {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .summary-desc {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+  }
+
+  .summary-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .summary-stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+
+  .summary-stat-value {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .summary-stat-value.accent { color: var(--accent); }
+  .summary-stat-value.green { color: var(--green); }
+
+  /* MATERIAL SECTION IN DETAIL */
+  .material-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--yellow);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+  }
+
+  .material-section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--yellow);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .material-pn {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .material-desc {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+
+  .material-avg {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  /* HISTORY TABLE */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 32px;
+  }
+
+  .hist-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 600px; }
+
+  .hist-table thead tr { background: var(--bg3); border-bottom: 1px solid var(--border2); }
+
+  .hist-table thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .hist-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .hist-table tbody tr:last-child { border-bottom: none; }
+  .hist-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .hist-table tbody td { padding: 10px 12px; vertical-align: middle; }
+
+  .po-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .po-link:hover { text-decoration: underline; }
+
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  .status-pill.complete { background: rgba(46,204,113,0.12); color: var(--green); border: 1px solid rgba(46,204,113,0.25); }
+  .status-pill.in-process { background: rgba(74,158,255,0.12); color: var(--accent); border: 1px solid rgba(74,158,255,0.3); }
+  .status-pill.waiting { background: rgba(243,156,18,0.12); color: var(--yellow); border: 1px solid rgba(243,156,18,0.3); }
+  .status-pill.not-started { background: rgba(85,96,128,0.15); color: var(--text3); border: 1px solid rgba(85,96,128,0.3); }
+
+  @media (max-width: 600px) {
+    .header { padding: 12px 16px; }
+    .main { padding: 16px; }
+    .results-grid { grid-template-columns: 1fr; }
+    .summary-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">BIC <span>/ Parts</span></div>
+  <div class="header-right">
+    <a href="dashboard.html" class="hdr-btn">&#8592; Dashboard</a>
+    <a href="index.html" class="hdr-btn primary">+ New PO</a>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- INDEX VIEW -->
+  <div id="view-index">
+    <div class="search-section">
+      <div class="search-box-wrap">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" class="search-box" id="search-box"
+          placeholder="Search part number, description, or material..."
+          oninput="onSearch()" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="search-hint">Search by part number, description, material part #, or material description</div>
+    </div>
+
+    <div id="index-content">
+      <div class="loading-state"><div class="spinner"></div><p>Loading parts data...</p></div>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div id="view-detail">
+    <button class="detail-back" onclick="showIndex()">&#8592; Back to results</button>
+    <div id="detail-content"></div>
+  </div>
+
+</div>
+
+<script>
+const CONFIG_KEY = 'bic_config';
+const THEME_KEY = 'bic_theme';
+let allLines = [];
+let allPOs = [];
+let currentTab = 'parts';
+let lastSearch = '';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+// Apply theme on load
+window.addEventListener('load', () => {
+  const theme = localStorage.getItem(THEME_KEY) || 'dark';
+  document.body.classList.toggle('light', theme === 'light');
+  loadData();
+});
+
+// ── LOAD DATA ─────────────────────────────────────────────────────────────────
+async function loadData() {
+  const cfg = getConfig();
+  if (!cfg.script) {
+    document.getElementById('index-content').innerHTML =
+      '<div class="no-results">Apps Script URL not configured. <a href="dashboard.html" style="color:var(--accent)">Go to Dashboard → Settings</a></div>';
+    return;
+  }
+
+  try {
+    const url = cfg.script + '?action=getDashboardData&t=' + Date.now();
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error);
+
+    allLines = data.lineItems || [];
+    allPOs = data.pos || [];
+
+    renderIndex('');
+  } catch (err) {
+    document.getElementById('index-content').innerHTML =
+      `<div class="no-results">Failed to load: ${err.message}</div>`;
+  }
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function onSearch() {
+  const q = document.getElementById('search-box').value.trim().toLowerCase();
+  lastSearch = q;
+  renderIndex(q);
+}
+
+// ── INDEX RENDER ──────────────────────────────────────────────────────────────
+function renderIndex(q) {
+  const container = document.getElementById('index-content');
+
+  if (currentTab === 'parts') {
+    renderPartsIndex(q, container);
+  } else {
+    renderMaterialsIndex(q, container);
+  }
+}
+
+function buildTabsHTML(activeTab) {
+  return `<div class="result-tabs">
+    <button class="tab-btn ${activeTab==='parts'?'active':''}" onclick="switchTab('parts')">
+      Machined Parts
+    </button>
+    <button class="tab-btn ${activeTab==='materials'?'active':''}" onclick="switchTab('materials')">
+      Raw Materials
+    </button>
+  </div>`;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  renderIndex(lastSearch);
+}
+
+function renderPartsIndex(q, container) {
+  // Unique parts (by part number)
+  const partMap = {};
+  allLines.forEach(l => {
+    if (!l.partNumber) return;
+    const key = String(l.partNumber).trim();
+    if (!key) return;
+    if (!partMap[key]) {
+      partMap[key] = {
+        partNumber: key,
+        descriptions: new Set(),
+        runs: [],
+        totalQty: 0
+      };
+    }
+    if (l.description) partMap[key].descriptions.add(l.description);
+    partMap[key].runs.push(l);
+    partMap[key].totalQty += parseFloat(l.qty) || 0;
+  });
+
+  let parts = Object.values(partMap);
+
+  if (q) {
+    parts = parts.filter(p =>
+      p.partNumber.toLowerCase().includes(q) ||
+      [...p.descriptions].some(d => d.toLowerCase().includes(q))
+    );
+  }
+
+  parts.sort((a, b) => a.partNumber.localeCompare(b.partNumber));
+
+  const tabsHTML = buildTabsHTML('parts');
+
+  if (parts.length === 0) {
+    container.innerHTML = tabsHTML + `<div class="no-results">${q ? 'No parts matching "' + esc(q) + '"' : 'No parts data yet'}</div>`;
+    return;
+  }
+
+  const label = q
+    ? `<div class="results-label">${parts.length} part${parts.length!==1?'s':''} matching "${esc(q)}"</div>`
+    : `<div class="results-label">${parts.length} unique part${parts.length!==1?'s':''}</div>`;
+
+  const cards = parts.map(p => {
+    const desc = [...p.descriptions][0] || '';
+    const lastRun = p.runs.slice().sort((a,b) => b.dueDate > a.dueDate ? 1 : -1)[0];
+    const lastDate = lastRun ? (lastRun.statusUpdated ? lastRun.statusUpdated.split(' ')[0] : lastRun.dueDate) : '—';
+    const completedRuns = p.runs.filter(r => (r.status||'').toLowerCase() === 'complete');
+
+    return `<div class="result-card" onclick="showPartDetail('${esc(p.partNumber)}')">
+      <div class="rc-pn">${esc(p.partNumber)}</div>
+      <div class="rc-desc">${esc(desc)}</div>
+      <div class="rc-meta">
+        <div class="rc-meta-item">
+          <span class="rc-meta-label">Total runs</span>
+          <span class="rc-meta-value">${p.runs.length}</span>
+        </div>
+        <div class="rc-meta-item">
+          <span class="rc-meta-label">Total qty</span>
+          <span class="rc-meta-value">${p.totalQty}</span>
+        </div>
+        <div class="rc-meta-item">
+          <span class="rc-meta-label">Completed</span>
+          <span class="rc-meta-value">${completedRuns.length}</span>
+        </div>
+        <div class="rc-meta-item">
+          <span class="rc-meta-label">Last date</span>
+          <span class="rc-meta-value">${esc(lastDate)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = tabsHTML + label + `<div class="results-grid">${cards}</div>`;
+}
+
+function renderMaterialsIndex(q, container) {
+  // Unique materials (by material part number)
+  const matMap = {};
+  allLines.forEach(l => {
+    if (!l.materialPartNumber) return;
+    const key = String(l.materialPartNumber).trim();
+    if (!key) return;
+    if (!matMap[key]) {
+      matMap[key] = {
+        materialPartNumber: key,
+        descriptions: new Set(),
+        parts: new Set(),
+        usages: []
+      };
+    }
+    if (l.materialDescription) matMap[key].descriptions.add(l.materialDescription);
+    if (l.partNumber) matMap[key].parts.add(l.partNumber);
+    if (l.materialUsed) matMap[key].usages.push(parseFloat(l.materialUsed) || 0);
+  });
+
+  let mats = Object.values(matMap);
+
+  if (q) {
+    mats = mats.filter(m =>
+      m.materialPartNumber.toLowerCase().includes(q) ||
+      [...m.descriptions].some(d => d.toLowerCase().includes(q))
+    );
+  }
+
+  mats.sort((a, b) => a.materialPartNumber.localeCompare(b.materialPartNumber));
+
+  const tabsHTML = buildTabsHTML('materials');
+
+  if (mats.length === 0) {
+    container.innerHTML = tabsHTML + `<div class="no-results">${q ? 'No materials matching "' + esc(q) + '"' : 'No materials data yet'}</div>`;
+    return;
+  }
+
+  const label = q
+    ? `<div class="results-label">${mats.length} material${mats.length!==1?'s':''} matching "${esc(q)}"</div>`
+    : `<div class="results-label">${mats.length} unique material${mats.length!==1?'s':''}</div>`;
+
+  const cards = mats.map(m => {
+    const desc = [...m.descriptions][0] || '';
+    const totalUsed = m.usages.reduce((a,b) => a+b, 0);
+
+    return `<div class="material-card" onclick="showMaterialDetail('${esc(m.materialPartNumber)}')">
+      <div class="mc-pn">${esc(m.materialPartNumber)}</div>
+      <div class="mc-desc">${esc(desc)}</div>
+      <div class="rc-meta">
+        <div class="rc-meta-item">
+          <span class="rc-meta-label">Parts made</span>
+          <span class="rc-meta-value">${m.parts.size}</span>
+        </div>
+        <div class="rc-meta-item">
+          <span class="rc-meta-label">Times used</span>
+          <span class="rc-meta-value">${m.usages.length}</span>
+        </div>
+        <div class="rc-meta-item">
+          <span class="rc-meta-label">Total consumed</span>
+          <span class="rc-meta-value">${totalUsed > 0 ? totalUsed.toFixed(2) + '"' : '—'}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = tabsHTML + label + `<div class="results-grid">${cards}</div>`;
+}
+
+// ── PART DETAIL ───────────────────────────────────────────────────────────────
+function showPartDetail(partNumber) {
+  document.getElementById('view-index').style.display = 'none';
+  document.getElementById('view-detail').style.display = 'block';
+
+  const runs = allLines.filter(l => String(l.partNumber).trim() === partNumber);
+
+  if (runs.length === 0) {
+    document.getElementById('detail-content').innerHTML = '<div class="no-results">No data found.</div>';
+    return;
+  }
+
+  const desc = runs.find(r => r.description)?.description || '';
+  const totalQty = runs.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
+
+  const cycleRuns = runs.filter(r => r.cyclePerPart !== '' && r.cyclePerPart !== null && r.cyclePerPart !== undefined && r.cyclePerPart !== '');
+  const avgCycle = cycleRuns.length > 0
+    ? (cycleRuns.reduce((s,r) => s + (parseFloat(r.cyclePerPart)||0), 0) / cycleRuns.length).toFixed(1)
+    : null;
+
+  const totalRuns = runs.filter(r => r.totalJobTime !== '' && r.totalJobTime !== null && r.totalJobTime !== undefined && r.totalJobTime !== '');
+  const avgTotal = totalRuns.length > 0
+    ? (totalRuns.reduce((s,r) => s + (parseFloat(r.totalJobTime)||0), 0) / totalRuns.length).toFixed(1)
+    : null;
+
+  const completedRuns = runs.filter(r => (r.status||'').toLowerCase() === 'complete');
+  const sorted = runs.slice().sort((a,b) => {
+    const da = a.statusUpdated || a.dueDate || '';
+    const db = b.statusUpdated || b.dueDate || '';
+    return db > da ? 1 : -1;
+  });
+  const lastDate = sorted[0]?.statusUpdated ? sorted[0].statusUpdated.split(' ')[0] : sorted[0]?.dueDate || '—';
+
+  // Material info
+  const matRun = runs.find(r => r.materialPartNumber);
+  const matSection = matRun ? `
+    <div class="material-section">
+      <div class="material-section-label">Raw Material</div>
+      <div class="material-pn">${esc(matRun.materialPartNumber)}</div>
+      <div class="material-desc">${esc(matRun.materialDescription)}</div>
+      <div class="material-avg">
+        ${matRun.materialPerPart ? 'Avg per part: ' + matRun.materialPerPart + '"' : ''}
+      </div>
+    </div>` : '';
+
+  // History rows
+  const rows = sorted.map(r => {
+    const po = allPOs.find(p => String(p.poNumber) === String(r.poNumber));
+    const poDate = po?.poDate || '—';
+    const sc = statusClass(r.status);
+    const completedDate = r.statusUpdated ? r.statusUpdated.split(' ')[0] : '—';
+
+    return `<tr>
+      <td><span class="po-link" onclick="window.location='dashboard.html'">#${esc(String(r.poNumber))}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${esc(poDate)}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:center">${esc(String(r.qty))}</td>
+      <td><span class="status-pill ${sc}">${esc(r.status)}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${esc(completedDate)}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:center">${r.cyclePerPart !== '' && r.cyclePerPart !== undefined && r.cyclePerPart !== null ? esc(String(r.cyclePerPart)) + ' min' : '—'}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:center">${r.totalJobTime !== '' && r.totalJobTime !== undefined && r.totalJobTime !== null ? esc(String(r.totalJobTime)) + ' min' : '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${esc(r.materialPartNumber)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-pn">${esc(partNumber)}</div>
+      <div class="summary-desc">${esc(desc)}</div>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <span class="summary-stat-label">Total runs</span>
+          <span class="summary-stat-value accent">${runs.length}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Total qty made</span>
+          <span class="summary-stat-value">${totalQty}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Completed runs</span>
+          <span class="summary-stat-value green">${completedRuns.length}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Last made</span>
+          <span class="summary-stat-value" style="font-size:14px">${esc(lastDate)}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Avg cycle/part</span>
+          <span class="summary-stat-value" style="font-size:14px">${avgCycle ? avgCycle + ' min' : '—'}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Avg total job</span>
+          <span class="summary-stat-value" style="font-size:14px">${avgTotal ? avgTotal + ' min' : '—'}</span>
+        </div>
+      </div>
+    </div>
+
+    ${matSection}
+
+    <div class="section-label">Run History</div>
+    <div class="table-wrap">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>PO #</th>
+            <th>PO Date</th>
+            <th style="width:50px;text-align:center">Qty</th>
+            <th>Status</th>
+            <th>Completed</th>
+            <th style="text-align:center">Cycle/Part</th>
+            <th style="text-align:center">Total Job</th>
+            <th>Material</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── MATERIAL DETAIL ───────────────────────────────────────────────────────────
+function showMaterialDetail(matPN) {
+  document.getElementById('view-index').style.display = 'none';
+  document.getElementById('view-detail').style.display = 'block';
+
+  const runs = allLines.filter(l => String(l.materialPartNumber).trim() === matPN);
+
+  if (runs.length === 0) {
+    document.getElementById('detail-content').innerHTML = '<div class="no-results">No data found.</div>';
+    return;
+  }
+
+  const desc = runs.find(r => r.materialDescription)?.materialDescription || '';
+  const totalUsed = runs.reduce((s,r) => s + (parseFloat(r.materialUsed)||0), 0);
+  const uniqueParts = [...new Set(runs.map(r => r.partNumber).filter(Boolean))];
+
+  const sorted = runs.slice().sort((a,b) => {
+    const da = a.statusUpdated || a.dueDate || '';
+    const db = b.statusUpdated || b.dueDate || '';
+    return db > da ? 1 : -1;
+  });
+
+  const rows = sorted.map(r => {
+    const po = allPOs.find(p => String(p.poNumber) === String(r.poNumber));
+    const poDate = po?.poDate || '—';
+    const sc = statusClass(r.status);
+
+    return `<tr>
+      <td><span class="po-link">#${esc(String(r.poNumber))}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${esc(poDate)}</td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--accent)">${esc(r.partNumber)}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:center">${esc(String(r.qty))}</td>
+      <td><span class="status-pill ${sc}">${esc(r.status)}</span></td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:right">${r.materialUsed ? esc(String(r.materialUsed)) + '"' : '—'}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:right">${r.materialPerPart ? esc(String(r.materialPerPart)) + '"' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const partsListHTML = uniqueParts.map(p =>
+    `<span style="font-family:var(--mono);font-size:12px;color:var(--accent);margin-right:12px;cursor:pointer"
+      onclick="showPartDetail('${esc(p)}')">${esc(p)}</span>`
+  ).join('');
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-pn" style="color:var(--yellow)">${esc(matPN)}</div>
+      <div class="summary-desc">${esc(desc)}</div>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <span class="summary-stat-label">Times used</span>
+          <span class="summary-stat-value accent">${runs.length}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Total consumed</span>
+          <span class="summary-stat-value">${totalUsed > 0 ? totalUsed.toFixed(2) + '"' : '—'}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Unique parts</span>
+          <span class="summary-stat-value">${uniqueParts.length}</span>
+        </div>
+      </div>
+      ${uniqueParts.length > 0 ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="summary-stat-label" style="margin-bottom:8px">Parts made from this material</div>
+        ${partsListHTML}
+      </div>` : ''}
+    </div>
+
+    <div class="section-label">Usage History</div>
+    <div class="table-wrap">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>PO #</th>
+            <th>PO Date</th>
+            <th>Part Number</th>
+            <th style="width:50px;text-align:center">Qty</th>
+            <th>Status</th>
+            <th style="text-align:right">Used (in)</th>
+            <th style="text-align:right">Per Part (in)</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── BACK TO INDEX ─────────────────────────────────────────────────────────────
+function showIndex() {
+  document.getElementById('view-detail').style.display = 'none';
+  document.getElementById('view-index').style.display = 'block';
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function statusClass(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'not started') return 'not-started';
+  if (s === 'waiting on material') return 'waiting';
+  if (s === 'in process') return 'in-process';
+  if (s === 'complete') return 'complete';
+  return 'not-started';
+}
+
+function esc(val) {
+  if (val === null || val === undefined) return '';
+  return String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>
