@@ -17,17 +17,36 @@
     --text2: #8b95b0;
     --text3: #556080;
     --accent: #4a9eff;
+    --accent2: #2d7de0;
+    --green: #2ecc71;
+    --yellow: #f39c12;
+    --red: #e74c3c;
     --mono: 'IBM Plex Mono', monospace;
     --sans: 'IBM Plex Sans', sans-serif;
-
     --s-not-started: #556080;
     --s-waiting: #f39c12;
     --s-in-process: #4a9eff;
     --s-complete: #2ecc71;
+  }
 
-    --overdue: #e74c3c;
-    --due-soon: #f39c12;
-    --ok: #2ecc71;
+  body.light {
+    --bg: #f4f5f7;
+    --bg2: #ffffff;
+    --bg3: #ebedf2;
+    --border: #d0d4df;
+    --border2: #b0b8cc;
+    --text: #1a1d27;
+    --text2: #4a5068;
+    --text3: #8090b0;
+    --accent: #1a6fd4;
+    --accent2: #1458b0;
+    --green: #1a9e50;
+    --yellow: #c47d08;
+    --red: #c0392b;
+    --s-not-started: #8090b0;
+    --s-waiting: #c47d08;
+    --s-in-process: #1a6fd4;
+    --s-complete: #1a9e50;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,6 +56,7 @@
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
   }
 
   /* HEADER */
@@ -50,7 +70,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
   }
 
@@ -69,7 +89,7 @@
   .header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
@@ -77,9 +97,10 @@
     font-family: var(--mono);
     font-size: 10px;
     color: var(--text3);
+    white-space: nowrap;
   }
 
-  .btn-refresh {
+  .hdr-btn {
     font-family: var(--mono);
     font-size: 11px;
     background: transparent;
@@ -89,31 +110,190 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
   }
 
-  .btn-refresh:hover { color: var(--text); border-color: var(--accent); }
+  .hdr-btn:hover { color: var(--text); border-color: var(--accent); }
 
-  .btn-new {
+  .hdr-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .hdr-btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  /* SETTINGS PANEL */
+  .settings-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+  }
+
+  .settings-overlay.open { display: block; }
+
+  .settings-panel {
+    position: fixed;
+    top: 0;
+    right: -360px;
+    width: 340px;
+    max-width: 95vw;
+    height: 100vh;
+    background: var(--bg2);
+    border-left: 1px solid var(--border2);
+    padding: 24px;
+    transition: right 0.25s ease;
+    z-index: 201;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .settings-panel.open { right: 0; }
+
+  .settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .settings-header h2 {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .btn-close:hover { color: var(--text); }
+
+  .settings-section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .settings-field { margin-bottom: 14px; }
+
+  .settings-field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .settings-field input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 4px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .settings-field input:focus { outline: none; border-color: var(--accent); }
+
+  /* THEME TOGGLE */
+  .theme-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .theme-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-family: var(--mono);
     font-size: 11px;
+    color: var(--text3);
+  }
+
+  .toggle-track {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: var(--border2);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-track.on { background: var(--accent); }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    pointer-events: none;
+  }
+
+  .toggle-track.on .toggle-thumb { transform: translateX(18px); }
+
+  .btn-save-settings {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
     background: var(--accent);
     border: none;
     color: #fff;
-    padding: 7px 14px;
-    border-radius: 4px;
+    padding: 11px 20px;
+    border-radius: 5px;
     cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
+    width: 100%;
     transition: background 0.15s;
   }
 
-  .btn-new:hover { background: #2d7de0; }
+  .btn-save-settings:hover { background: var(--accent2); }
 
   /* FILTERS */
   .filters {
     display: flex;
     gap: 8px;
-    padding: 14px 24px;
+    padding: 12px 24px;
     border-bottom: 1px solid var(--border);
     background: var(--bg2);
     flex-wrap: wrap;
@@ -126,7 +306,6 @@
     color: var(--text3);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-right: 4px;
   }
 
   .filter-btn {
@@ -153,17 +332,17 @@
     color: var(--text);
     padding: 5px 12px;
     border-radius: 4px;
-    width: 200px;
+    width: 220px;
     margin-left: auto;
     transition: border-color 0.15s;
   }
 
   .filter-search:focus { outline: none; border-color: var(--accent); }
 
-  /* STATS BAR */
+  /* STATS */
   .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 1px;
     background: var(--border);
     border-bottom: 1px solid var(--border);
@@ -171,7 +350,7 @@
 
   .stat {
     background: var(--bg2);
-    padding: 16px 20px;
+    padding: 14px 20px;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -179,7 +358,7 @@
 
   .stat-value {
     font-family: var(--mono);
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 600;
     color: var(--text);
     line-height: 1;
@@ -193,19 +372,16 @@
     text-transform: uppercase;
   }
 
-  .stat-value.overdue { color: var(--overdue); }
+  .stat-value.overdue { color: var(--red); }
   .stat-value.in-process { color: var(--s-in-process); }
   .stat-value.complete { color: var(--s-complete); }
+  .stat-value.warning { color: var(--s-waiting); }
 
-  /* MAIN CONTENT */
-  .main {
-    padding: 20px 24px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+  /* MAIN */
+  .main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
 
   /* PO CARDS */
-  .po-list { display: flex; flex-direction: column; gap: 16px; }
+  .po-list { display: flex; flex-direction: column; gap: 14px; }
 
   .po-card {
     background: var(--bg2);
@@ -216,30 +392,26 @@
   }
 
   .po-card:hover { border-color: var(--border2); }
-
-  .po-card.overdue { border-left: 3px solid var(--overdue); }
-  .po-card.due-soon { border-left: 3px solid var(--due-soon); }
-  .po-card.all-complete { border-left: 3px solid var(--s-complete); opacity: 0.7; }
+  .po-card.overdue { border-left: 3px solid var(--red); }
+  .po-card.due-soon { border-left: 3px solid var(--yellow); }
+  .po-card.all-complete { border-left: 3px solid var(--s-complete); opacity: 0.72; }
 
   .po-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
+    padding: 13px 18px;
     cursor: pointer;
     gap: 12px;
     flex-wrap: wrap;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid transparent;
+    transition: background 0.1s, border-color 0.1s;
   }
 
+  .po-card.expanded .po-card-header { border-bottom-color: var(--border); }
   .po-card-header:hover { background: rgba(255,255,255,0.02); }
 
-  .po-meta {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
+  .po-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
   .po-number {
     font-family: var(--mono);
@@ -248,10 +420,7 @@
     color: var(--text);
   }
 
-  .po-desc {
-    font-size: 13px;
-    color: var(--text2);
-  }
+  .po-desc { font-size: 13px; color: var(--text2); }
 
   .po-by {
     font-family: var(--mono);
@@ -262,11 +431,7 @@
     border-radius: 3px;
   }
 
-  .po-card-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .po-card-right { display: flex; align-items: center; gap: 10px; }
 
   .po-date-badge {
     font-family: var(--mono);
@@ -276,70 +441,44 @@
     white-space: nowrap;
   }
 
-  .po-date-badge.overdue { background: rgba(231,76,60,0.15); color: var(--overdue); border: 1px solid rgba(231,76,60,0.3); }
-  .po-date-badge.due-soon { background: rgba(243,156,18,0.12); color: var(--due-soon); border: 1px solid rgba(243,156,18,0.3); }
+  .po-date-badge.overdue { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
+  .po-date-badge.due-soon { background: rgba(243,156,18,0.12); color: var(--yellow); border: 1px solid rgba(243,156,18,0.3); }
   .po-date-badge.ok { background: rgba(46,204,113,0.08); color: var(--s-complete); border: 1px solid rgba(46,204,113,0.2); }
   .po-date-badge.complete { background: rgba(46,204,113,0.08); color: var(--s-complete); border: 1px solid rgba(46,204,113,0.2); }
 
-  .po-progress {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
+  .po-progress { display: flex; gap: 4px; align-items: center; }
 
-  .progress-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-
+  .progress-dot { width: 8px; height: 8px; border-radius: 50%; }
   .progress-dot.not-started { background: var(--s-not-started); }
   .progress-dot.waiting { background: var(--s-waiting); }
   .progress-dot.in-process { background: var(--s-in-process); }
   .progress-dot.complete { background: var(--s-complete); }
 
-  .chevron {
-    font-size: 12px;
-    color: var(--text3);
-    transition: transform 0.2s;
-  }
-
+  .chevron { font-size: 11px; color: var(--text3); transition: transform 0.2s; }
   .po-card.expanded .chevron { transform: rotate(180deg); }
 
   /* NOTES CALLOUT */
   .po-notes {
-    margin: 0 18px 0;
+    margin: 12px 18px 0;
     padding: 8px 12px;
     background: rgba(243,156,18,0.08);
     border: 1px solid rgba(243,156,18,0.25);
     border-radius: 4px;
     font-size: 12px;
-    color: var(--due-soon);
+    color: var(--yellow);
     font-style: italic;
     display: none;
   }
 
-  .po-card.expanded .po-notes { display: block; margin-top: 12px; }
+  .po-card.expanded .po-notes { display: block; }
 
-  /* LINE ITEMS TABLE */
-  .po-lines {
-    display: none;
-    padding: 12px 18px 16px;
-    overflow-x: auto;
-  }
-
+  /* LINE ITEMS */
+  .po-lines { display: none; padding: 12px 18px 16px; overflow-x: auto; }
   .po-card.expanded .po-lines { display: block; }
 
-  .lines-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    min-width: 700px;
-  }
+  .lines-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
 
-  .lines-table thead tr {
-    border-bottom: 1px solid var(--border);
-  }
+  .lines-table thead tr { border-bottom: 1px solid var(--border); }
 
   .lines-table thead th {
     font-family: var(--mono);
@@ -353,18 +492,10 @@
     white-space: nowrap;
   }
 
-  .lines-table tbody tr {
-    border-bottom: 1px solid rgba(42,48,69,0.5);
-    transition: background 0.1s;
-  }
-
+  .lines-table tbody tr { border-bottom: 1px solid rgba(42,48,69,0.5); transition: background 0.1s; }
   .lines-table tbody tr:last-child { border-bottom: none; }
   .lines-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-
-  .lines-table tbody td {
-    padding: 9px 10px;
-    vertical-align: middle;
-  }
+  .lines-table tbody td { padding: 9px 10px; vertical-align: top; }
 
   .part-number {
     font-family: var(--mono);
@@ -377,21 +508,16 @@
     font-family: var(--mono);
     font-size: 11px;
     color: var(--text3);
-    margin-top: 2px;
+    margin-top: 3px;
   }
 
-  .due-date {
-    font-family: var(--mono);
-    font-size: 11px;
-    white-space: nowrap;
-  }
-
-  .due-date.overdue { color: var(--overdue); }
-  .due-date.due-soon { color: var(--due-soon); }
+  .due-date { font-family: var(--mono); font-size: 11px; white-space: nowrap; }
+  .due-date.overdue { color: var(--red); }
+  .due-date.due-soon { color: var(--yellow); }
   .due-date.ok { color: var(--text2); }
   .due-date.complete { color: var(--text3); }
 
-  /* STATUS SELECTOR */
+  /* STATUS SELECT */
   .status-select {
     font-family: var(--mono);
     font-size: 11px;
@@ -403,34 +529,83 @@
     appearance: none;
     -webkit-appearance: none;
     min-width: 130px;
+    background-image: none;
   }
 
-  .status-select.not-started {
-    background: rgba(85,96,128,0.15);
-    color: var(--s-not-started);
-    border-color: rgba(85,96,128,0.3);
-  }
-
-  .status-select.waiting {
-    background: rgba(243,156,18,0.12);
-    color: var(--s-waiting);
-    border-color: rgba(243,156,18,0.3);
-  }
-
-  .status-select.in-process {
-    background: rgba(74,158,255,0.12);
-    color: var(--s-in-process);
-    border-color: rgba(74,158,255,0.3);
-  }
-
-  .status-select.complete {
-    background: rgba(46,204,113,0.1);
-    color: var(--s-complete);
-    border-color: rgba(46,204,113,0.25);
-  }
-
+  .status-select.not-started { background: rgba(85,96,128,0.15); color: var(--s-not-started); border-color: rgba(85,96,128,0.3); }
+  .status-select.waiting { background: rgba(243,156,18,0.12); color: var(--s-waiting); border-color: rgba(243,156,18,0.3); }
+  .status-select.in-process { background: rgba(74,158,255,0.12); color: var(--s-in-process); border-color: rgba(74,158,255,0.3); }
+  .status-select.complete { background: rgba(46,204,113,0.1); color: var(--s-complete); border-color: rgba(46,204,113,0.25); }
   .status-select:focus { outline: none; }
 
+  /* TIMESTAMP */
+  .status-timestamp {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 3px;
+    white-space: nowrap;
+  }
+
+  /* CYCLE TIME INPUTS */
+  .time-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .time-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .time-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    white-space: nowrap;
+    min-width: 60px;
+  }
+
+  .time-input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 7px;
+    border-radius: 4px;
+    width: 70px;
+    transition: border-color 0.15s;
+  }
+
+  .time-input:focus { outline: none; border-color: var(--accent); }
+
+  .time-unit {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .btn-save-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 2px;
+    align-self: flex-start;
+  }
+
+  .btn-save-time:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-save-time.saved { border-color: var(--green); color: var(--green); }
+
+  /* SAVING INDICATOR */
   .saving-indicator {
     font-family: var(--mono);
     font-size: 10px;
@@ -461,18 +636,10 @@
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-state p, .empty-state p { font-family: var(--mono); font-size: 13px; }
 
-  .loading-state p, .empty-state p {
-    font-family: var(--mono);
-    font-size: 13px;
-  }
-
-  /* TRENDS SECTION */
-  .trends {
-    margin-top: 32px;
-    border-top: 1px solid var(--border);
-    padding-top: 24px;
-  }
+  /* TRENDS */
+  .trends { margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px; }
 
   .trends-header {
     font-family: var(--mono);
@@ -484,11 +651,7 @@
     margin-bottom: 16px;
   }
 
-  .trends-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 8px;
-  }
+  .trends-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
 
   .trend-month {
     background: var(--bg2);
@@ -498,126 +661,17 @@
     text-align: center;
   }
 
-  .trend-month-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text3);
-    margin-bottom: 6px;
-  }
+  .trend-month-label { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+  .trend-month-count { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); }
+  .trend-month-bar { height: 3px; background: var(--accent); border-radius: 2px; margin-top: 8px; }
 
-  .trend-month-count {
-    font-family: var(--mono);
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .trend-month-bar {
-    height: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-    margin-top: 8px;
-    transition: width 0.3s;
-  }
-
-  /* CONFIG OVERLAY */
-  .config-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(15,17,23,0.85);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-
-  .config-overlay.open { display: flex; }
-
-  .config-box {
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    padding: 28px;
-    width: 100%;
-    max-width: 440px;
-  }
-
-  .config-box h2 {
-    font-family: var(--mono);
-    font-size: 15px;
-    margin-bottom: 6px;
-  }
-
-  .config-box p {
-    font-size: 13px;
-    color: var(--text2);
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-
-  .config-field { margin-bottom: 14px; }
-
-  .config-field label {
-    display: block;
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    color: var(--text3);
-    text-transform: uppercase;
-    margin-bottom: 5px;
-  }
-
-  .config-field input {
-    font-family: var(--mono);
-    font-size: 12px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 12px;
-    border-radius: 4px;
-    width: 100%;
-    transition: border-color 0.15s;
-  }
-
-  .config-field input:focus { outline: none; border-color: var(--accent); }
-
-  .config-actions { display: flex; gap: 10px; margin-top: 20px; }
-
-  .btn-save {
-    font-family: var(--mono);
-    font-size: 12px;
-    background: var(--accent);
-    border: none;
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    flex: 1;
-    transition: background 0.15s;
-  }
-
-  .btn-save:hover { background: #2d7de0; }
-
-  .btn-cancel {
-    font-family: var(--mono);
-    font-size: 12px;
-    background: transparent;
-    border: 1px solid var(--border2);
-    color: var(--text2);
-    padding: 10px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .btn-cancel:hover { color: var(--text); }
-
+  /* RESPONSIVE */
   @media (max-width: 600px) {
     .header { padding: 12px 16px; }
     .filters { padding: 10px 16px; }
-    .main { padding: 16px; }
+    .main { padding: 14px 16px; }
     .filter-search { width: 100%; margin-left: 0; }
+    .last-updated { display: none; }
   }
 </style>
 </head>
@@ -627,19 +681,20 @@
   <div class="logo">BIC <span>/ Dashboard</span></div>
   <div class="header-right">
     <span class="last-updated" id="last-updated">—</span>
-    <button class="btn-refresh" onclick="loadData()">↺ Refresh</button>
-    <button class="btn-refresh" onclick="openConfig()">⚙ Settings</button>
-    <a href="index.html" class="btn-new">+ New PO</a>
+    <button class="hdr-btn" onclick="loadData()">&#8635; Refresh</button>
+    <a href="parts.html" class="hdr-btn">&#9741; Parts</a>
+    <button class="hdr-btn" onclick="openSettings()">&#9881; Settings</button>
+    <a href="index.html" class="hdr-btn primary">+ New PO</a>
   </div>
 </div>
 
 <div class="filters">
   <span class="filter-label">Status</span>
-  <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
-  <button class="filter-btn" data-filter="Not Started" onclick="setFilter('Not Started', this)">Not Started</button>
-  <button class="filter-btn" data-filter="Waiting on Material" onclick="setFilter('Waiting on Material', this)">Waiting on Material</button>
-  <button class="filter-btn" data-filter="In Process" onclick="setFilter('In Process', this)">In Process</button>
-  <button class="filter-btn" data-filter="Complete" onclick="setFilter('Complete', this)">Complete</button>
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('Not Started',this)">Not Started</button>
+  <button class="filter-btn" onclick="setFilter('Waiting on Material',this)">Waiting on Material</button>
+  <button class="filter-btn" onclick="setFilter('In Process',this)">In Process</button>
+  <button class="filter-btn" onclick="setFilter('Complete',this)">Complete</button>
   <input type="text" class="filter-search" id="search" placeholder="Search PO # or part..." oninput="renderDashboard()">
 </div>
 
@@ -649,67 +704,110 @@
   <div id="dashboard-content">
     <div class="loading-state"><div class="spinner"></div><p>Loading work orders...</p></div>
   </div>
-
   <div class="trends" id="trends-section" style="display:none">
     <div class="trends-header">Parts completed by month</div>
     <div class="trends-grid" id="trends-grid"></div>
   </div>
 </div>
 
-<!-- CONFIG OVERLAY -->
-<div class="config-overlay" id="config-overlay">
-  <div class="config-box">
-    <h2>Dashboard Settings</h2>
-    <p>Enter your Apps Script Web App URL to connect to Google Sheets.</p>
-    <div class="config-field">
+<!-- SETTINGS PANEL -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-header">
+    <h2>Settings</h2>
+    <button class="btn-close" onclick="closeSettings()">&times;</button>
+  </div>
+
+  <div>
+    <div class="settings-section-label">Appearance</div>
+    <div class="theme-row">
+      <span class="theme-label">Light mode</span>
+      <div class="toggle-wrap">
+        <span id="theme-label-dark">Dark</span>
+        <div class="toggle-track" id="theme-toggle" onclick="toggleTheme()">
+          <div class="toggle-thumb"></div>
+        </div>
+        <span id="theme-label-light">Light</span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="settings-section-label">Connection</div>
+    <div class="settings-field">
       <label>Apps Script Web App URL</label>
       <input type="text" id="cfg-script" placeholder="https://script.google.com/macros/s/...">
     </div>
-    <div class="config-actions">
-      <button class="btn-cancel" onclick="closeConfig()">Cancel</button>
-      <button class="btn-save" onclick="saveConfig()">Save & Reload</button>
-    </div>
   </div>
+
+  <button class="btn-save-settings" onclick="saveSettings()">Save & Reload</button>
 </div>
 
 <script>
 const CONFIG_KEY = 'bic_config';
+const THEME_KEY = 'bic_theme';
 let allPOs = [];
 let allLines = [];
 let activeFilter = 'all';
 
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.body.classList.toggle('light', theme === 'light');
+  const toggle = document.getElementById('theme-toggle');
+  if (toggle) toggle.classList.toggle('on', theme === 'light');
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem(THEME_KEY) || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
 function getConfig() {
   try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
   catch { return {}; }
 }
 
-function openConfig() {
+// ── SETTINGS PANEL ────────────────────────────────────────────────────────────
+function openSettings() {
   const cfg = getConfig();
   if (cfg.script) document.getElementById('cfg-script').value = cfg.script;
-  document.getElementById('config-overlay').classList.add('open');
+  const theme = localStorage.getItem(THEME_KEY) || 'dark';
+  document.getElementById('theme-toggle').classList.toggle('on', theme === 'light');
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-panel').classList.add('open');
 }
 
-function closeConfig() {
-  document.getElementById('config-overlay').classList.remove('open');
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
 }
 
-function saveConfig() {
+function saveSettings() {
   const script = document.getElementById('cfg-script').value.trim();
   if (!script) { alert('Please enter the Apps Script URL.'); return; }
   const cfg = getConfig();
   cfg.script = script;
   localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
-  closeConfig();
+  closeSettings();
   loadData();
 }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const theme = localStorage.getItem(THEME_KEY) || 'dark';
+  applyTheme(theme);
+  const cfg = getConfig();
+  if (!cfg.script) { openSettings(); }
+  else { loadData(); }
+});
 
 // ── DATA LOADING ──────────────────────────────────────────────────────────────
 async function loadData() {
   const cfg = getConfig();
-  if (!cfg.script) {
-    openConfig();
-    return;
-  }
+  if (!cfg.script) { openSettings(); return; }
 
   document.getElementById('dashboard-content').innerHTML =
     '<div class="loading-state"><div class="spinner"></div><p>Loading work orders...</p></div>';
@@ -718,26 +816,24 @@ async function loadData() {
     const url = cfg.script + '?action=getDashboardData&t=' + Date.now();
     const resp = await fetch(url);
     const data = await resp.json();
-
     if (!data.success) throw new Error(data.error || 'Unknown error');
 
     allPOs = data.pos || [];
     allLines = data.lineItems || [];
 
     document.getElementById('last-updated').textContent =
-      'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
     renderStats();
     renderDashboard();
     renderTrends();
-
   } catch (err) {
     document.getElementById('dashboard-content').innerHTML =
       `<div class="empty-state"><p>Failed to load: ${err.message}</p><p style="font-size:11px;margin-top:8px">Check your Apps Script URL in Settings.</p></div>`;
   }
 }
 
-// ── STATUS HELPERS ────────────────────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function statusClass(status) {
   const s = (status || '').toLowerCase();
   if (s === 'not started') return 'not-started';
@@ -773,18 +869,18 @@ function earliestDue(lines) {
   return earliest || 'ok';
 }
 
-function worstStatus(lines) {
-  const order = ['not-started', 'waiting', 'in-process', 'complete'];
-  let worst = 'complete';
-  lines.forEach(l => {
-    const sc = statusClass(l.status);
-    if (order.indexOf(sc) < order.indexOf(worst)) worst = sc;
-  });
-  return worst;
+function esc(val) {
+  if (val === null || val === undefined) return '';
+  return String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
 function renderStats() {
+  const openPOs = allPOs.filter(po => {
+    const lines = allLines.filter(l => String(l.poNumber) === String(po.poNumber));
+    return lines.some(l => statusClass(l.status) !== 'complete');
+  }).length;
+
   const total = allLines.length;
   const overdue = allLines.filter(l => dueDateClass(l.dueDate, l.status) === 'overdue').length;
   const inProc = allLines.filter(l => statusClass(l.status) === 'in-process').length;
@@ -792,11 +888,11 @@ function renderStats() {
   const complete = allLines.filter(l => statusClass(l.status) === 'complete').length;
 
   document.getElementById('stats-bar').innerHTML = `
-    <div class="stat"><div class="stat-value">${allPOs.length}</div><div class="stat-label">Open POs</div></div>
+    <div class="stat"><div class="stat-value">${openPOs}</div><div class="stat-label">Open POs</div></div>
     <div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Total Lines</div></div>
     <div class="stat"><div class="stat-value overdue">${overdue}</div><div class="stat-label">Overdue</div></div>
     <div class="stat"><div class="stat-value in-process">${inProc}</div><div class="stat-label">In Process</div></div>
-    <div class="stat"><div class="stat-value" style="color:var(--s-waiting)">${waiting}</div><div class="stat-label">Waiting Mat.</div></div>
+    <div class="stat"><div class="stat-value warning">${waiting}</div><div class="stat-label">Waiting Mat.</div></div>
     <div class="stat"><div class="stat-value complete">${complete}</div><div class="stat-label">Complete</div></div>
   `;
 }
@@ -812,10 +908,8 @@ function setFilter(f, btn) {
 // ── DASHBOARD RENDER ──────────────────────────────────────────────────────────
 function renderDashboard() {
   const search = (document.getElementById('search')?.value || '').toLowerCase();
-
   let pos = [...allPOs];
 
-  // Sort by earliest due date
   pos.sort((a, b) => {
     const linesA = allLines.filter(l => String(l.poNumber) === String(a.poNumber));
     const linesB = allLines.filter(l => String(l.poNumber) === String(b.poNumber));
@@ -826,7 +920,7 @@ function renderDashboard() {
   const content = document.getElementById('dashboard-content');
 
   if (pos.length === 0) {
-    content.innerHTML = '<div class="empty-state"><p>No work orders yet.</p><p style="font-size:11px;margin-top:8px">Use the capture app to add your first PO.</p></div>';
+    content.innerHTML = '<div class="empty-state"><p>No work orders yet.</p></div>';
     return;
   }
 
@@ -835,17 +929,17 @@ function renderDashboard() {
   pos.forEach(po => {
     const lines = allLines.filter(l => String(l.poNumber) === String(po.poNumber));
 
-    // Apply status filter
     if (activeFilter !== 'all') {
-      const hasMatch = lines.some(l => l.status === activeFilter);
-      if (!hasMatch) return;
+      if (!lines.some(l => l.status === activeFilter)) return;
     }
 
-    // Apply search
     if (search) {
       const match = String(po.poNumber).toLowerCase().includes(search) ||
         (po.orderDescription || '').toLowerCase().includes(search) ||
-        lines.some(l => (l.partNumber || '').toLowerCase().includes(search));
+        lines.some(l =>
+          (l.partNumber || '').toLowerCase().includes(search) ||
+          (l.description || '').toLowerCase().includes(search)
+        );
       if (!match) return;
     }
 
@@ -858,48 +952,77 @@ function renderDashboard() {
     else if (dueClass === 'due-soon') cardClass += ' due-soon';
 
     const dots = lines.map(l =>
-      `<div class="progress-dot ${statusClass(l.status)}" title="${l.partNumber}: ${l.status}"></div>`
+      `<div class="progress-dot ${statusClass(l.status)}" title="${esc(l.partNumber)}: ${esc(l.status)}"></div>`
     ).join('');
 
     const dueBadge = allComplete
-      ? `<span class="po-date-badge complete">✓ Complete</span>`
+      ? `<span class="po-date-badge complete">&#10003; Complete</span>`
       : dueClass === 'overdue'
-        ? `<span class="po-date-badge overdue">⚠ Overdue</span>`
+        ? `<span class="po-date-badge overdue">&#9888; Overdue</span>`
         : dueClass === 'due-soon'
           ? `<span class="po-date-badge due-soon">Due Soon</span>`
           : `<span class="po-date-badge ok">On Track</span>`;
 
     const notesHtml = po.handwrittenNotes
-      ? `<div class="po-notes">⚠ Note: ${esc(po.handwrittenNotes)}</div>` : '';
+      ? `<div class="po-notes">&#9888; Note: ${esc(po.handwrittenNotes)}</div>` : '';
 
     const lineRows = lines.map(l => {
       const dc = dueDateClass(l.dueDate, l.status);
       const sc = statusClass(l.status);
+      const safePN = esc(l.poNumber);
+      const safeLine = esc(l.line);
+
       const matInfo = l.materialPartNumber
-        ? `<div class="material-info">${esc(l.materialPartNumber)} · ${esc(l.materialDescription)} · ${l.materialUsed ? l.materialUsed + '"' : ''} total${l.materialPerPart ? ' / ' + l.materialPerPart + '" ea' : ''}</div>`
+        ? `<div class="material-info">${esc(l.materialPartNumber)} &middot; ${esc(l.materialDescription)}${l.materialUsed ? ' &middot; ' + l.materialUsed + '"' : ''}${l.materialPerPart ? ' / ' + l.materialPerPart + '" ea' : ''}</div>`
         : '';
 
-      return `
-        <tr>
-          <td style="color:var(--text3);font-family:var(--mono);font-size:11px">${esc(l.line)}</td>
-          <td>
-            <div class="part-number">${esc(l.partNumber)}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">${esc(l.description)}</div>
-            ${matInfo}
-          </td>
-          <td style="font-family:var(--mono);font-size:12px;text-align:center">${l.qty}</td>
-          <td><span class="due-date ${dc}">${esc(l.dueDate) || '—'}</span></td>
-          <td>
-            <select class="status-select ${sc}" onchange="updateStatus('${esc(po.poNumber)}','${esc(l.line)}',this)">
-              <option ${l.status==='Not Started'?'selected':''}>Not Started</option>
-              <option ${l.status==='Waiting on Material'?'selected':''}>Waiting on Material</option>
-              <option ${l.status==='In Process'?'selected':''}>In Process</option>
-              <option ${l.status==='Complete'?'selected':''}>Complete</option>
-            </select>
-            <span class="saving-indicator" id="saving-${esc(po.poNumber)}-${esc(l.line)}">saving...</span>
-          </td>
-          <td style="font-size:12px;color:var(--text2)">${esc(l.notes)}</td>
-        </tr>`;
+      const cycleVal = l.cyclePerPart !== '' && l.cyclePerPart !== null && l.cyclePerPart !== undefined ? l.cyclePerPart : '';
+      const totalVal = l.totalJobTime !== '' && l.totalJobTime !== null && l.totalJobTime !== undefined ? l.totalJobTime : '';
+      const tsVal = l.statusUpdated ? `<div class="status-timestamp">${esc(l.statusUpdated)}</div>` : '';
+
+      return `<tr>
+        <td style="color:var(--text3);font-family:var(--mono);font-size:11px;white-space:nowrap">${esc(l.line)}</td>
+        <td>
+          <div class="part-number">${esc(l.partNumber)}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${esc(l.description)}</div>
+          ${matInfo}
+        </td>
+        <td style="font-family:var(--mono);font-size:12px;text-align:center;white-space:nowrap">${esc(String(l.qty))}</td>
+        <td><span class="due-date ${dc}">${esc(l.dueDate) || '&mdash;'}</span></td>
+        <td>
+          <select class="status-select ${sc}" onchange="updateStatus('${safePN}','${safeLine}',this)">
+            <option ${l.status==='Not Started'?'selected':''}>Not Started</option>
+            <option ${l.status==='Waiting on Material'?'selected':''}>Waiting on Material</option>
+            <option ${l.status==='In Process'?'selected':''}>In Process</option>
+            <option ${l.status==='Complete'?'selected':''}>Complete</option>
+          </select>
+          ${tsVal}
+          <span class="saving-indicator" id="saving-${safePN}-${safeLine}">saving...</span>
+        </td>
+        <td>
+          <div class="time-inputs">
+            <div class="time-row">
+              <span class="time-label">Per part</span>
+              <input class="time-input" type="number" min="0" step="1"
+                value="${esc(String(cycleVal))}"
+                id="cycle-${safePN}-${safeLine}"
+                placeholder="—">
+              <span class="time-unit">min</span>
+            </div>
+            <div class="time-row">
+              <span class="time-label">Total job</span>
+              <input class="time-input" type="number" min="0" step="1"
+                value="${esc(String(totalVal))}"
+                id="total-${safePN}-${safeLine}"
+                placeholder="—">
+              <span class="time-unit">min</span>
+            </div>
+            <button class="btn-save-time" id="timebtn-${safePN}-${safeLine}"
+              onclick="saveTimes('${safePN}','${safeLine}')">Save</button>
+          </div>
+        </td>
+        <td style="font-size:12px;color:var(--text2)">${esc(l.notes)}</td>
+      </tr>`;
     }).join('');
 
     cards.push(`
@@ -913,7 +1036,7 @@ function renderDashboard() {
           <div class="po-card-right">
             ${dueBadge}
             <div class="po-progress">${dots}</div>
-            <span class="chevron">▼</span>
+            <span class="chevron">&#9660;</span>
           </div>
         </div>
         ${notesHtml}
@@ -923,9 +1046,10 @@ function renderDashboard() {
               <tr>
                 <th style="width:40px">#</th>
                 <th>Part / Description / Material</th>
-                <th style="width:48px">Qty</th>
-                <th style="width:90px">Due Date</th>
+                <th style="width:44px">Qty</th>
+                <th style="width:88px">Due Date</th>
                 <th style="width:160px">Status</th>
+                <th style="width:180px">Cycle Time</th>
                 <th>Notes</th>
               </tr>
             </thead>
@@ -942,16 +1066,6 @@ function renderDashboard() {
   }
 }
 
-function esc(val) {
-  if (val === null || val === undefined) return '';
-  return String(val)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 function toggleCard(poNum) {
   const card = document.getElementById('po-' + poNum);
   if (card) card.classList.toggle('expanded');
@@ -963,26 +1077,93 @@ async function updateStatus(poNumber, line, selectEl) {
   if (!cfg.script) return;
 
   const newStatus = selectEl.value;
-  const sc = statusClass(newStatus);
-  selectEl.className = 'status-select ' + sc;
+  selectEl.className = 'status-select ' + statusClass(newStatus);
 
-  const savingId = `saving-${poNumber}-${line}`;
-  const indicator = document.getElementById(savingId);
-  if (indicator) indicator.style.display = 'inline';
+  const savingEl = document.getElementById(`saving-${poNumber}-${line}`);
+  if (savingEl) savingEl.style.display = 'inline';
 
-  // Update local data
   const item = allLines.find(l => String(l.poNumber) === String(poNumber) && String(l.line) === String(line));
   if (item) item.status = newStatus;
 
   try {
-    const resp = await fetch(cfg.script + '?action=updateStatus&poNumber=' + encodeURIComponent(poNumber) + '&line=' + encodeURIComponent(line) + '&status=' + encodeURIComponent(newStatus));
+    const url = cfg.script +
+      '?action=updateStatus' +
+      '&poNumber=' + encodeURIComponent(poNumber) +
+      '&line=' + encodeURIComponent(line) +
+      '&status=' + encodeURIComponent(newStatus);
+
+    const resp = await fetch(url);
     const result = await resp.json();
     if (!result.success) throw new Error(result.error);
+
+    // Update timestamp display
+    if (result.timestamp && item) {
+      item.statusUpdated = result.timestamp;
+      const tsEl = selectEl.parentElement.querySelector('.status-timestamp');
+      if (tsEl) tsEl.textContent = result.timestamp;
+      else {
+        const div = document.createElement('div');
+        div.className = 'status-timestamp';
+        div.textContent = result.timestamp;
+        selectEl.parentElement.insertBefore(div, selectEl.nextSibling);
+      }
+    }
+
     renderStats();
   } catch (err) {
     alert('Failed to save status: ' + err.message);
   } finally {
-    if (indicator) indicator.style.display = 'none';
+    if (savingEl) savingEl.style.display = 'none';
+  }
+}
+
+// ── CYCLE TIME SAVE ───────────────────────────────────────────────────────────
+async function saveTimes(poNumber, line) {
+  const cfg = getConfig();
+  if (!cfg.script) return;
+
+  const cycleEl = document.getElementById(`cycle-${poNumber}-${line}`);
+  const totalEl = document.getElementById(`total-${poNumber}-${line}`);
+  const btnEl   = document.getElementById(`timebtn-${poNumber}-${line}`);
+
+  const cycleVal = cycleEl ? cycleEl.value.trim() : '';
+  const totalVal = totalEl ? totalEl.value.trim() : '';
+
+  if (cycleVal === '' && totalVal === '') return;
+
+  if (btnEl) { btnEl.textContent = 'Saving...'; btnEl.disabled = true; }
+
+  // Update local data
+  const item = allLines.find(l => String(l.poNumber) === String(poNumber) && String(l.line) === String(line));
+  if (item) {
+    if (cycleVal !== '') item.cyclePerPart = cycleVal;
+    if (totalVal !== '') item.totalJobTime = totalVal;
+  }
+
+  try {
+    const url = cfg.script +
+      '?action=updateTimes' +
+      '&poNumber=' + encodeURIComponent(poNumber) +
+      '&line=' + encodeURIComponent(line) +
+      '&cyclePerPart=' + encodeURIComponent(cycleVal) +
+      '&totalJobTime=' + encodeURIComponent(totalVal);
+
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if (!result.success) throw new Error(result.error);
+
+    if (btnEl) {
+      btnEl.textContent = 'Saved ✓';
+      btnEl.classList.add('saved');
+      setTimeout(() => {
+        btnEl.textContent = 'Save';
+        btnEl.classList.remove('saved');
+        btnEl.disabled = false;
+      }, 2000);
+    }
+  } catch (err) {
+    alert('Failed to save times: ' + err.message);
+    if (btnEl) { btnEl.textContent = 'Save'; btnEl.disabled = false; }
   }
 }
 
@@ -994,7 +1175,6 @@ function renderTrends() {
     return;
   }
 
-  // Group by month using PO date (approximate — uses date added)
   const byMonth = {};
   allPOs.forEach(po => {
     const dateStr = po.dateAdded || po.poDate || '';
@@ -1005,45 +1185,32 @@ function renderTrends() {
     if (!y) return;
     if (y.length === 2) y = '20' + y;
     const key = y + '-' + String(m).padStart(2,'0');
-    const lines = allLines.filter(l => String(l.poNumber) === String(po.poNumber) && statusClass(l.status) === 'complete');
+    const lines = allLines.filter(l =>
+      String(l.poNumber) === String(po.poNumber) && statusClass(l.status) === 'complete'
+    );
     byMonth[key] = (byMonth[key] || 0) + lines.length;
   });
 
   const keys = Object.keys(byMonth).sort();
-  if (keys.length === 0) {
-    document.getElementById('trends-section').style.display = 'none';
-    return;
-  }
+  if (keys.length === 0) { document.getElementById('trends-section').style.display = 'none'; return; }
 
   const max = Math.max(...Object.values(byMonth));
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  const html = keys.map(k => {
+  document.getElementById('trends-grid').innerHTML = keys.map(k => {
     const [y, m] = k.split('-');
     const label = monthNames[parseInt(m)-1] + ' ' + y.slice(2);
     const count = byMonth[k];
     const barWidth = max > 0 ? Math.round((count / max) * 100) : 0;
-    return `
-      <div class="trend-month">
-        <div class="trend-month-label">${label}</div>
-        <div class="trend-month-count">${count}</div>
-        <div class="trend-month-bar" style="width:${barWidth}%"></div>
-      </div>`;
+    return `<div class="trend-month">
+      <div class="trend-month-label">${label}</div>
+      <div class="trend-month-count">${count}</div>
+      <div class="trend-month-bar" style="width:${barWidth}%"></div>
+    </div>`;
   }).join('');
 
-  document.getElementById('trends-grid').innerHTML = html;
   document.getElementById('trends-section').style.display = 'block';
 }
-
-// ── BOOT ──────────────────────────────────────────────────────────────────────
-window.addEventListener('load', () => {
-  const cfg = getConfig();
-  if (!cfg.script) {
-    openConfig();
-  } else {
-    loadData();
-  }
-});
 </script>
 </body>
 </html>
