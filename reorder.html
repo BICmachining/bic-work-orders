@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIC Work Orders — Reorder Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117; --bg2: #171b24; --bg3: #1e2433;
+    --border: #2a3045; --border2: #3a4460;
+    --text: #e8ecf4; --text2: #8b95b0; --text3: #556080;
+    --accent: #4a9eff; --accent2: #2d7de0;
+    --green: #2ecc71; --yellow: #f39c12; --red: #e74c3c;
+    --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  body.light {
+    --bg: #f4f5f7; --bg2: #ffffff; --bg3: #ebedf2;
+    --border: #d0d4df; --border2: #b0b8cc;
+    --text: #1a1d27; --text2: #4a5068; --text3: #8090b0;
+    --accent: #1a6fd4; --accent2: #1458b0;
+    --green: #1a9e50; --yellow: #c47d08; --red: #c0392b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+  /* ── Header ── */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; gap: 10px; flex-wrap: wrap; }
+  .logo-wrap { display: flex; align-items: center; }
+  .header-logo { height: 36px; width: auto; }
+  .header-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .hdr-btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border2); color: var(--text2); padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: all 0.15s; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+  .hdr-btn:hover { color: var(--text); border-color: var(--accent); }
+  .hdr-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .hdr-btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+  .hdr-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  /* ── Settings panel ── */
+  .settings-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+  .settings-overlay.open { display: block; }
+  .settings-panel { position: fixed; top: 0; right: -360px; width: 340px; max-width: 95vw; height: 100vh; background: var(--bg2); border-left: 1px solid var(--border2); padding: 24px; transition: right 0.25s ease; z-index: 201; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+  .settings-panel.open { right: 0; }
+  .settings-header { display: flex; align-items: center; justify-content: space-between; }
+  .settings-header h2 { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--text); }
+  .btn-close { background: none; border: none; color: var(--text3); font-size: 22px; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; transition: color 0.15s; }
+  .btn-close:hover { color: var(--text); }
+  .settings-section-label { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 10px; }
+  .settings-field { margin-bottom: 14px; }
+  .settings-field label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text3); text-transform: uppercase; margin-bottom: 5px; }
+  .settings-field input { font-family: var(--mono); font-size: 12px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 4px; width: 100%; transition: border-color 0.15s; }
+  .settings-field input:focus { outline: none; border-color: var(--accent); }
+  .theme-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .theme-label { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .toggle-track { position: relative; width: 40px; height: 22px; background: var(--border2); border-radius: 11px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-track.on { background: var(--accent); }
+  .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.2s; pointer-events: none; }
+  .toggle-track.on .toggle-thumb { transform: translateX(18px); }
+  .btn-save-settings { font-family: var(--mono); font-size: 12px; font-weight: 600; background: var(--accent); border: none; color: #fff; padding: 11px 20px; border-radius: 5px; cursor: pointer; width: 100%; transition: background 0.15s; }
+  .btn-save-settings:hover { background: var(--accent2); }
+
+  /* ── Main ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+
+  .page-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); }
+  .page-meta { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 11px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+  .btn:hover { border-color: var(--accent); color: var(--text); }
+
+  /* ── Summary stats ── */
+  .stats-bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 32px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; }
+  .stat-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 8px; }
+  .stat-value { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--text); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.yellow { color: var(--yellow); }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 36px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .section-title { font-family: var(--mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); }
+  .section-count { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .reorder-table { width: 100%; border-collapse: collapse; min-width: 680px; }
+  .reorder-table thead tr { background: var(--bg3); border-bottom: 2px solid var(--border2); }
+  .reorder-table th { font-family: var(--mono); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 14px; text-align: left; white-space: nowrap; }
+  .reorder-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .reorder-table tr:last-child td { border-bottom: none; }
+  .reorder-table tr.qty-zero td { background: rgba(231,76,60,0.06); }
+  .reorder-table tr.qty-low td { background: rgba(243,156,18,0.05); }
+  .reorder-table tr:hover td { background: var(--bg3); }
+  .id-mono { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .pn-link { font-family: var(--mono); font-size: 11px; color: var(--accent); text-decoration: none; }
+  .pn-link:hover { text-decoration: underline; }
+  .pn-no-link { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+  .qty-zero-badge { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; background: rgba(231,76,60,0.15); color: var(--red); }
+  .qty-low-badge { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; background: rgba(243,156,18,0.15); color: var(--yellow); }
+  .view-btn { font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; transition: all 0.12s; }
+  .view-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── All clear ── */
+  .all-clear { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 16px; text-align: center; }
+  .all-clear-icon { font-size: 48px; }
+  .all-clear-title { font-family: var(--mono); font-size: 18px; font-weight: 600; color: var(--green); }
+  .all-clear-sub { font-family: var(--mono); font-size: 12px; color: var(--text3); }
+
+  /* ── Loading / error ── */
+  .loading { display: flex; align-items: center; justify-content: center; height: 50vh; flex-direction: column; gap: 16px; color: var(--text2); font-family: var(--mono); font-size: 13px; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Print styles ── */
+  @media print {
+    .header, .settings-overlay, .settings-panel, .page-meta .btn, .view-btn { display: none !important; }
+    body { background: #fff; color: #000; }
+    .stat-card { border: 1px solid #ccc; }
+    .table-wrap { border: 1px solid #ccc; }
+    .reorder-table td, .reorder-table th { color: #000 !important; }
+    .reorder-table tr.qty-zero td { background: #ffe8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .reorder-table tr.qty-low td { background: #fff8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  @media (max-width: 600px) {
+    .main { padding: 16px; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div class="logo-wrap">
+    <img src="Bell_Logo.jpg" alt="Bell Intercoolers" class="header-logo">
+  </div>
+  <div class="header-right">
+    <a href="dashboard.html" class="hdr-btn">Dashboard</a>
+    <a href="parts.html"     class="hdr-btn">Parts</a>
+    <a href="tools.html"     class="hdr-btn">Tools</a>
+    <a href="reorder.html"   class="hdr-btn active">Reorder</a>
+    <button class="hdr-btn" onclick="openSettings()">&#9881; Settings</button>
+    <a href="index.html"     class="hdr-btn primary">+ New PO</a>
+  </div>
+</div>
+
+<!-- ── Settings overlay ── -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-header">
+    <h2>Settings</h2>
+    <button class="btn-close" onclick="closeSettings()">&times;</button>
+  </div>
+  <div>
+    <div class="settings-section-label">Appearance</div>
+    <div class="theme-row">
+      <span class="theme-label">Light mode</span>
+      <div class="toggle-wrap">
+        <span>Dark</span>
+        <div class="toggle-track" id="theme-toggle" onclick="toggleTheme()"><div class="toggle-thumb"></div></div>
+        <span>Light</span>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="settings-section-label">Connection</div>
+    <div class="settings-field">
+      <label>Apps Script URL</label>
+      <input type="text" id="settings-script-url" placeholder="Paste your Web App URL here">
+    </div>
+  </div>
+  <button class="btn-save-settings" onclick="saveSettings()">Save &amp; Reload</button>
+</div>
+
+<!-- ── Main ── -->
+<div class="main">
+  <div class="page-title-row">
+    <div class="page-title">Reorder Dashboard</div>
+    <div class="page-meta">
+      <span id="last-updated">—</span>
+      <button class="btn" onclick="loadData()">&#8635; Refresh</button>
+      <button class="btn" onclick="window.print()">&#128438; Print</button>
+    </div>
+  </div>
+
+  <div id="view-loading" class="loading">
+    <div class="spinner"></div>
+    <span>Loading inventory data...</span>
+  </div>
+
+  <div id="view-error" style="display:none" class="loading">
+    <span id="error-msg" style="color:var(--red)"></span>
+    <button class="btn" onclick="loadData()">Retry</button>
+    <button class="btn" onclick="openSettings()">Check Settings</button>
+  </div>
+
+  <div id="view-content" style="display:none">
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Total to Reorder</div>
+        <div class="stat-value red" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tools</div>
+        <div class="stat-value yellow" id="stat-tools">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Inserts</div>
+        <div class="stat-value yellow" id="stat-inserts">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Out of Stock</div>
+        <div class="stat-value red" id="stat-zero">0</div>
+      </div>
+    </div>
+
+    <!-- All clear state -->
+    <div id="all-clear" style="display:none" class="all-clear">
+      <div class="all-clear-icon">&#10003;</div>
+      <div class="all-clear-title">All inventory levels OK</div>
+      <div class="all-clear-sub">No items below minimum quantity.</div>
+    </div>
+
+    <!-- Tools section -->
+    <div class="section" id="section-tools" style="display:none">
+      <div class="section-header">
+        <span class="section-title">&#128295; Tools</span>
+        <span class="section-count" id="count-tools"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="reorder-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Description</th>
+              <th>Vendor</th>
+              <th>Product #</th>
+              <th>On Hand</th>
+              <th>Min Qty</th>
+              <th>Last Price</th>
+              <th>Last Order</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="tools-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Inserts section -->
+    <div class="section" id="section-inserts" style="display:none">
+      <div class="section-header">
+        <span class="section-title">&#128312; Inserts</span>
+        <span class="section-count" id="count-inserts"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="reorder-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Description</th>
+              <th>Vendor</th>
+              <th>Product #</th>
+              <th>On Hand</th>
+              <th>Min Qty</th>
+              <th>Last Price</th>
+              <th>Last Order</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="inserts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /view-content -->
+</div>
+
+<script>
+const THEME_KEY  = 'bic_theme';
+const CONFIG_KEY = 'bic_config';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function applyTheme(t) {
+  document.body.classList.toggle('light', t === 'light');
+  const tog = document.getElementById('theme-toggle');
+  if (tog) tog.classList.toggle('on', t === 'light');
+}
+function toggleTheme() {
+  const cur  = localStorage.getItem(THEME_KEY) || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+function openSettings() {
+  document.getElementById('settings-script-url').value = getConfig().script || '';
+  const t = localStorage.getItem(THEME_KEY) || 'dark';
+  document.getElementById('theme-toggle').classList.toggle('on', t === 'light');
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-panel').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
+}
+function saveSettings() {
+  const url = document.getElementById('settings-script-url').value.trim();
+  const cfg = getConfig(); cfg.script = url;
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  location.reload();
+}
+
+(function() {
+  const DEFAULT_SCRIPT = 'https://script.google.com/macros/s/AKfycbwPhuL9gsYgewRQCRcbyguqw3ogJUOXniqi9C_voFQZQlK_76LNXWyBLgkcCCs-yk3Feg/exec';
+  try {
+    const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    if (!cfg.script) { cfg.script = DEFAULT_SCRIPT; localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+  } catch(e) {}
+})();
+applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+// ── Load ────────────────────────────────────────────────────────────────────
+async function loadData() {
+  document.getElementById('view-loading').style.display = 'flex';
+  document.getElementById('view-content').style.display = 'none';
+  document.getElementById('view-error').style.display   = 'none';
+
+  const cfg = getConfig();
+  if (!cfg.script) {
+    document.getElementById('error-msg').textContent = 'No Apps Script URL configured. Open Settings.';
+    document.getElementById('view-loading').style.display = 'none';
+    document.getElementById('view-error').style.display   = 'flex';
+    return;
+  }
+
+  try {
+    const resp = await fetch(cfg.script + '?action=getReorderData&t=' + Date.now());
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Failed to load reorder data.');
+    renderReorder(data);
+    document.getElementById('last-updated').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  } catch(err) {
+    document.getElementById('error-msg').textContent = err.message;
+    document.getElementById('view-loading').style.display = 'none';
+    document.getElementById('view-error').style.display   = 'flex';
+  }
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtPrice(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? '—' : '$' + n.toFixed(2);
+}
+
+function rowClass(onHand) {
+  if (Number(onHand) === 0) return 'qty-zero';
+  return 'qty-low';
+}
+
+function qtyBadge(onHand) {
+  if (Number(onHand) === 0) return `<span class="qty-zero-badge">OUT</span>`;
+  return `<span class="qty-low-badge">${onHand}</span>`;
+}
+
+function renderRows(items, baseUrl) {
+  return items
+    .sort((a,b) => a.description.localeCompare(b.description))
+    .map(item => {
+      const pnCell = item.productUrl
+        ? `<a class="pn-link" href="${esc(item.productUrl)}" target="_blank" rel="noopener">${esc(item.productNumber || '—')}</a>`
+        : `<span class="pn-no-link">${esc(item.productNumber || '—')}</span>`;
+
+      return `<tr class="${rowClass(item.onHand)}">
+        <td class="id-mono">${esc(item.id)}</td>
+        <td>${esc(item.description || '—')}</td>
+        <td style="font-size:12px;color:var(--text2)">${esc(item.vendor || '—')}</td>
+        <td>${pnCell}</td>
+        <td>${qtyBadge(item.onHand)}</td>
+        <td style="font-family:var(--mono);font-size:12px">${item.minQty}</td>
+        <td style="font-family:var(--mono);font-size:12px">${fmtPrice(item.lastPrice)}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${esc(item.lastOrderDate || '—')}</td>
+        <td><a class="view-btn" href="tools.html#${esc(item.id)}">&#128269; View</a></td>
+      </tr>`;
+    }).join('');
+}
+
+function renderReorder(data) {
+  const tools   = data.reorderTools   || [];
+  const inserts = data.reorderInserts || [];
+  const total   = tools.length + inserts.length;
+  const zeroCount = [...tools, ...inserts].filter(i => Number(i.onHand) === 0).length;
+
+  document.getElementById('stat-total').textContent   = total;
+  document.getElementById('stat-tools').textContent   = tools.length;
+  document.getElementById('stat-inserts').textContent = inserts.length;
+  document.getElementById('stat-zero').textContent    = zeroCount;
+
+  document.getElementById('view-loading').style.display = 'none';
+  document.getElementById('view-content').style.display = 'block';
+
+  if (total === 0) {
+    document.getElementById('all-clear').style.display    = 'flex';
+    document.getElementById('section-tools').style.display   = 'none';
+    document.getElementById('section-inserts').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('all-clear').style.display = 'none';
+
+  if (tools.length > 0) {
+    document.getElementById('section-tools').style.display = 'block';
+    document.getElementById('count-tools').textContent = tools.length + ' item' + (tools.length !== 1 ? 's' : '');
+    document.getElementById('tools-tbody').innerHTML = renderRows(tools);
+  }
+
+  if (inserts.length > 0) {
+    document.getElementById('section-inserts').style.display = 'block';
+    document.getElementById('count-inserts').textContent = inserts.length + ' item' + (inserts.length !== 1 ? 's' : '');
+    document.getElementById('inserts-tbody').innerHTML = renderRows(inserts);
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
