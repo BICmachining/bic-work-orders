@@ -26,6 +26,14 @@
     --sans: 'IBM Plex Sans', sans-serif;
   }
 
+  body.light {
+    --bg: #f4f5f7; --bg2: #ffffff; --bg3: #ebedf2;
+    --border: #d0d4df; --border2: #b0b8cc;
+    --text: #1a1d27; --text2: #4a5068; --text3: #8090b0;
+    --accent: #1a6fd4; --accent2: #1458b0;
+    --green: #1a9e50; --yellow: #c47d08; --red: #c0392b;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -34,6 +42,7 @@
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background 0.2s, color 0.2s;
   }
 
   .header {
@@ -48,17 +57,11 @@
     z-index: 100;
   }
 
-  .logo {
-    font-family: var(--mono);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .logo span { color: var(--text2); font-weight: 400; }
-  .header-actions { display: flex; gap: 10px; align-items: center; }
+  .logo-wrap { display: flex; align-items: center; }
+  .header-logo { height: 36px; width: auto; }
+  .logo-wrap { display: flex; align-items: center; }
+  .header-logo { height: 36px; width: auto; }
+  .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
   .btn-dash {
     font-family: var(--mono);
@@ -619,9 +622,14 @@
 <body>
 
 <div class="header">
-  <div class="logo">BIC <span>/ Work Orders</span></div>
+  <div class="logo-wrap">
+    <img src="Bell_Logo.jpg" alt="Bell Intercoolers" class="header-logo">
+  </div>
   <div class="header-actions">
-    <a href="dashboard.html" class="btn-dash">Dashboard →</a>
+    <a href="dashboard.html" class="btn-dash">Dashboard</a>
+    <a href="parts.html"     class="btn-dash">Parts</a>
+    <a href="tools.html"     class="btn-dash">Tools</a>
+    <a href="reorder.html"   class="btn-dash">Reorder</a>
   </div>
 </div>
 
@@ -768,9 +776,18 @@
 <script>
 // ── CONFIG ───────────────────────────────────────────────────────────────────
 const CONFIG_KEY = 'bic_config';
+const THEME_KEY  = 'bic_theme';
+// Apply theme immediately
+(function(){ document.body.classList.toggle('light', (localStorage.getItem(THEME_KEY)||'dark') === 'light'); })();
+
+const DEFAULT_SCRIPT = 'https://script.google.com/macros/s/AKfycbwPhuL9gsYgewRQCRcbyguqw3ogJUOXniqi9C_voFQZQlK_76LNXWyBLgkcCCs-yk3Feg/exec';
 
 function getConfig() {
-  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+  try {
+    const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    if (!cfg.script) { cfg.script = DEFAULT_SCRIPT; localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+    return cfg;
+  }
   catch { return {}; }
 }
 
