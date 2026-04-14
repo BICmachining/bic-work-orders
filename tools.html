@@ -105,7 +105,12 @@
   .results-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 20px; font-family: var(--mono); font-size: 11px; color: var(--text3); border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: var(--hdr-filter-h, 110px); z-index: 89; }
 
   /* Desktop table */
-  .results-table-wrap { overflow-x: auto; }
+  /* NOTE: Do NOT add overflow-x: auto here — it creates a scroll container that
+     breaks position:sticky on <th>. Sticky th positioning is relative to the
+     nearest scrollable ancestor; if that's this div instead of the viewport,
+     --thead-top stacks on top of the wrapper's own offset and pushes the header
+     far into the data. Horizontal overflow falls through to the page/body. */
+  .results-table-wrap { overflow-x: visible; }
   .results-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: var(--thead-top, 148px); z-index: 10; cursor: pointer; white-space: nowrap; user-select: none; overflow: hidden; }
   .results-table th .th-label { pointer-events: none; }
