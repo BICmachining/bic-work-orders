@@ -81,7 +81,7 @@
   #video-preview { width: 100%; border-radius: 6px; border: 1px solid var(--border); }
 
   /* ── Filter strip ── */
-  .filter-bar { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); overflow-x: auto; align-items: center; flex-wrap: wrap; }
+  .filter-bar { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); overflow-x: auto; align-items: center; flex-wrap: wrap; position: sticky; top: var(--hdr-h, 57px); z-index: 90; }
   .filter-bar::-webkit-scrollbar { height: 4px; }
   .filter-bar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   .pill-group { display: flex; gap: 4px; flex-shrink: 0; }
@@ -102,12 +102,12 @@
 
   /* ── Results ── */
   .results-area { padding: 0; }
-  .results-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; font-family: var(--mono); font-size: 11px; color: var(--text3); border-bottom: 1px solid var(--border); }
+  .results-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 20px; font-family: var(--mono); font-size: 11px; color: var(--text3); border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: var(--hdr-filter-h, 110px); z-index: 89; }
 
   /* Desktop table */
   .results-table-wrap { overflow-x: auto; }
   .results-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: 57px; z-index: 10; cursor: pointer; white-space: nowrap; user-select: none; overflow: hidden; }
+  .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: var(--thead-top, 148px); z-index: 10; cursor: pointer; white-space: nowrap; user-select: none; overflow: hidden; }
   .results-table th .th-label { pointer-events: none; }
   .results-table th:hover .th-label { color: var(--accent); }
   .results-table th.sort-asc .th-label::after { content: ' ↑'; color: var(--accent); }
@@ -1958,6 +1958,7 @@ async function startCameraScan(inputElementId) {
 
 // Search on Enter (barcode scanner)
 document.addEventListener('DOMContentLoaded', () => {
+  updateStickyOffsets();
   const searchInput = document.getElementById('main-search');
   if (searchInput) {
     searchInput.addEventListener('keydown', e => {
@@ -1991,10 +1992,27 @@ function esc(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Sticky offset measurement ──────────────────────────────────────────────
+function updateStickyOffsets() {
+  const hdr = document.querySelector('.header');
+  const bar = document.getElementById('filter-bar');
+  const rh  = document.querySelector('.results-header');
+  const hdrH    = hdr ? hdr.offsetHeight : 57;
+  const barH    = bar ? bar.offsetHeight : 53;
+  const rhH     = rh  ? rh.offsetHeight  : 36;
+  const root = document.documentElement;
+  root.style.setProperty('--hdr-h',        hdrH + 'px');
+  root.style.setProperty('--hdr-filter-h', (hdrH + barH) + 'px');
+  root.style.setProperty('--thead-top',    (hdrH + barH + rhH) + 'px');
+}
+window.addEventListener('resize', updateStickyOffsets);
+
 // ── Init ───────────────────────────────────────────────────────────────────
 loadData().then(() => {
   // Build the table header (columns, resize handles, drag-to-reorder)
   renderTableHeader();
+  // Measure actual header/filter heights for sticky positioning
+  updateStickyOffsets();
   // Support deep-link: tools.html#TL-006 → open detail directly
   const hash = location.hash.replace('#', '').trim();
   if (hash) {
