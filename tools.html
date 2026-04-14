@@ -107,7 +107,7 @@
   /* Desktop table */
   .results-table-wrap { overflow-x: auto; }
   .results-table { width: 100%; border-collapse: collapse; }
-  .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: 65px; cursor: pointer; white-space: nowrap; user-select: none; }
+  .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: 57px; z-index: 10; cursor: pointer; white-space: nowrap; user-select: none; }
   .results-table th:hover { color: var(--accent); }
   .results-table th.sort-asc::after { content: ' ↑'; color: var(--accent); }
   .results-table th.sort-desc::after { content: ' ↓'; color: var(--accent); }
@@ -738,6 +738,9 @@ function clearFilters() {
 function sortBy(field) {
   if (state.sortField === field) { state.sortDir *= -1; }
   else { state.sortField = field; state.sortDir = 1; }
+  // Re-run filters so the sort is applied to the full filtered set
+  applyFilters();
+  // Update sort indicator arrows after render
   document.querySelectorAll('.results-table th').forEach(th => {
     th.classList.remove('sort-asc','sort-desc');
   });
@@ -747,7 +750,6 @@ function sortBy(field) {
     const ths = document.querySelectorAll('.results-table th');
     if (ths[idx]) ths[idx].classList.add(state.sortDir === 1 ? 'sort-asc' : 'sort-desc');
   }
-  renderResults(state.filtered);
 }
 
 // ── Render results ─────────────────────────────────────────────────────────
