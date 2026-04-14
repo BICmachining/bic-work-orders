@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIC Work Orders — Tools</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.1/umd/index.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117; --bg2: #171b24; --bg3: #1e2433;
+    --border: #2a3045; --border2: #3a4460;
+    --text: #e8ecf4; --text2: #8b95b0; --text3: #556080;
+    --accent: #4a9eff; --accent2: #2d7de0;
+    --green: #2ecc71; --yellow: #f39c12; --red: #e74c3c;
+    --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  body.light {
+    --bg: #f4f5f7; --bg2: #ffffff; --bg3: #ebedf2;
+    --border: #d0d4df; --border2: #b0b8cc;
+    --text: #1a1d27; --text2: #4a5068; --text3: #8090b0;
+    --accent: #1a6fd4; --accent2: #1458b0;
+    --green: #1a9e50; --yellow: #c47d08; --red: #c0392b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+  /* ── Header ── */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; gap: 10px; flex-wrap: wrap; }
+  .logo-wrap { display: flex; align-items: center; }
+  .header-logo { height: 36px; width: auto; }
+  .header-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .hdr-btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border2); color: var(--text2); padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: all 0.15s; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+  .hdr-btn:hover { color: var(--text); border-color: var(--accent); }
+  .hdr-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .hdr-btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+  .hdr-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  /* ── Settings panel ── */
+  .settings-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+  .settings-overlay.open { display: block; }
+  .settings-panel { position: fixed; top: 0; right: -360px; width: 340px; max-width: 95vw; height: 100vh; background: var(--bg2); border-left: 1px solid var(--border2); padding: 24px; transition: right 0.25s ease; z-index: 201; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+  .settings-panel.open { right: 0; }
+  .settings-header { display: flex; align-items: center; justify-content: space-between; }
+  .settings-header h2 { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--text); }
+  .btn-close { background: none; border: none; color: var(--text3); font-size: 22px; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; transition: color 0.15s; }
+  .btn-close:hover { color: var(--text); }
+  .settings-section-label { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 10px; }
+  .settings-field { margin-bottom: 14px; }
+  .settings-field label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text3); text-transform: uppercase; margin-bottom: 5px; }
+  .settings-field input { font-family: var(--mono); font-size: 12px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 4px; width: 100%; transition: border-color 0.15s; }
+  .settings-field input:focus { outline: none; border-color: var(--accent); }
+  .theme-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .theme-label { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .toggle-track { position: relative; width: 40px; height: 22px; background: var(--border2); border-radius: 11px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-track.on { background: var(--accent); }
+  .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.2s; pointer-events: none; }
+  .toggle-track.on .toggle-thumb { transform: translateX(18px); }
+  .btn-save-settings { font-family: var(--mono); font-size: 12px; font-weight: 600; background: var(--accent); border: none; color: #fff; padding: 11px 20px; border-radius: 5px; cursor: pointer; width: 100%; transition: background 0.15s; }
+  .btn-save-settings:hover { background: var(--accent2); }
+
+  /* ── Loading / error ── */
+  .loading { display: flex; align-items: center; justify-content: center; height: 60vh; flex-direction: column; gap: 12px; color: var(--text2); font-family: var(--mono); font-size: 13px; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Index view ── */
+  #view-index { padding: 0; }
+  .index-hero { display: flex; flex-direction: column; align-items: center; padding: 36px 20px 24px; gap: 8px; }
+  .hero-logo { height: 120px; width: auto; }
+  .hero-tagline { font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; }
+  .search-wrap { width: 100%; max-width: 700px; margin: 0 auto; position: relative; padding: 0 20px; }
+  .search-input { width: 100%; font-family: var(--mono); font-size: 14px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); padding: 12px 48px 12px 16px; border-radius: 6px; transition: border-color 0.15s; }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+  .scan-btn { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; padding: 4px; transition: color 0.15s; }
+  .scan-btn:hover { color: var(--accent); }
+  #video-wrap { display: none; max-width: 700px; margin: 12px auto 0; padding: 0 20px; }
+  #video-preview { width: 100%; border-radius: 6px; border: 1px solid var(--border); }
+
+  /* ── Filter strip ── */
+  .filter-bar { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); overflow-x: auto; align-items: center; flex-wrap: wrap; }
+  .filter-bar::-webkit-scrollbar { height: 4px; }
+  .filter-bar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  .pill-group { display: flex; gap: 4px; flex-shrink: 0; }
+  .pill { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+  .pill:hover { border-color: var(--accent); color: var(--text); }
+  .pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filter-select { font-family: var(--mono); font-size: 11px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); padding: 5px 10px; border-radius: 4px; cursor: pointer; flex-shrink: 0; }
+  .filter-select:focus { outline: none; border-color: var(--accent); }
+  .filter-range { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .filter-range input { font-family: var(--mono); font-size: 11px; width: 64px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); padding: 5px 8px; border-radius: 4px; }
+  .filter-range span { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .filter-label { font-family: var(--mono); font-size: 10px; color: var(--text3); white-space: nowrap; text-transform: uppercase; letter-spacing: 0.06em; }
+  .toggle-small { display: flex; align-items: center; gap: 6px; flex-shrink: 0; cursor: pointer; }
+  .toggle-small input { cursor: pointer; accent-color: var(--accent); width: 14px; height: 14px; }
+  .clear-btn { font-family: var(--mono); font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 5px 8px; white-space: nowrap; }
+  .clear-btn:hover { color: var(--red); }
+  .filter-divider { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+
+  /* ── Results ── */
+  .results-area { padding: 0; }
+  .results-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; font-family: var(--mono); font-size: 11px; color: var(--text3); border-bottom: 1px solid var(--border); }
+
+  /* Desktop table */
+  .results-table-wrap { overflow-x: auto; }
+  .results-table { width: 100%; border-collapse: collapse; }
+  .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: 65px; cursor: pointer; white-space: nowrap; user-select: none; }
+  .results-table th:hover { color: var(--accent); }
+  .results-table th.sort-asc::after { content: ' ↑'; color: var(--accent); }
+  .results-table th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+  .results-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .results-table tr:hover td { background: var(--bg3); cursor: pointer; }
+  .id-cell { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .status-ok   { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 3px; background: rgba(46,204,113,0.15); color: var(--green); }
+  .status-low  { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 3px; background: rgba(243,156,18,0.15); color: var(--yellow); }
+  .status-reorder { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 3px; background: rgba(231,76,60,0.15); color: var(--red); }
+  .type-badge { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; background: var(--bg3); color: var(--text2); }
+
+  /* Mobile cards */
+  .cards-grid { display: none; padding: 12px; gap: 10px; flex-direction: column; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; cursor: pointer; transition: border-color 0.15s; }
+  .card:hover { border-color: var(--accent); }
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .card-desc { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .card-sub { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+  .card-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .qty-pill { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+  .qty-ok { background: rgba(46,204,113,0.15); color: var(--green); }
+  .qty-reorder { background: rgba(231,76,60,0.15); color: var(--red); }
+
+  /* Not found / empty */
+  .not-found { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; color: var(--text2); text-align: center; }
+  .not-found p { font-size: 14px; }
+  .not-found .nf-value { font-family: var(--mono); color: var(--text3); font-size: 13px; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .btn { font-family: var(--mono); font-size: 12px; padding: 8px 18px; border-radius: 4px; border: 1px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+  .btn:hover { border-color: var(--accent); color: var(--text); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent2); }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger:hover { background: var(--red); color: #fff; }
+
+  /* ── Detail view ── */
+  #view-detail, #view-insert-detail { padding: 0; }
+  .detail-nav { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .back-btn { font-family: var(--mono); font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 0; display: inline-flex; align-items: center; gap: 4px; transition: color 0.15s; }
+  .back-btn:hover { color: var(--accent); }
+  .detail-body { padding: 24px 20px; max-width: 900px; }
+  .detail-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .detail-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .badge { font-family: var(--mono); font-size: 10px; padding: 3px 10px; border-radius: 3px; background: var(--bg3); color: var(--text2); }
+  .badge.id { color: var(--accent); background: rgba(74,158,255,0.1); }
+  .badge.inserted { color: var(--yellow); background: rgba(243,156,18,0.1); }
+  .badge.solid { color: var(--green); background: rgba(46,204,113,0.1); }
+  .detail-name { font-size: 20px; font-weight: 500; line-height: 1.3; }
+  .detail-meta { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .detail-meta a { color: var(--accent); text-decoration: none; }
+  .detail-meta a:hover { text-decoration: underline; }
+  .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .section-sep { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 0 10px; border-top: 1px solid var(--border); margin-top: 20px; }
+  .spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .spec-item { display: flex; flex-direction: column; gap: 3px; }
+  .spec-label { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .spec-value { font-family: var(--mono); font-size: 13px; color: var(--text); }
+
+  /* Inventory section */
+  .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  .inv-table td { padding: 8px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .inv-table td:first-child { font-size: 13px; color: var(--text); width: 50%; }
+  .inv-table td:last-child { text-align: right; }
+  .mag-toggle { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--text2); cursor: pointer; }
+  .mag-toggle input { cursor: pointer; accent-color: var(--accent); width: 14px; height: 14px; }
+  .qty-ctrl { display: flex; align-items: center; gap: 6px; }
+  .qty-ctrl input[type=number] { font-family: var(--mono); font-size: 13px; width: 54px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 5px 8px; border-radius: 4px; text-align: center; -moz-appearance: textfield; }
+  .qty-ctrl input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .qty-ctrl button { font-family: var(--mono); font-size: 14px; width: 26px; height: 26px; border-radius: 4px; border: 1px solid var(--border2); color: var(--text2); background: var(--bg3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+  .qty-ctrl button:hover { border-color: var(--accent); color: var(--accent); }
+  .inv-summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 10px 0; font-family: var(--mono); font-size: 12px; color: var(--text2); border-top: 1px solid var(--border2); }
+  .inv-summary .total { font-size: 14px; color: var(--text); }
+  .saving-hint { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: 8px; }
+
+  /* Linked items */
+  .linked-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .linked-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg3); border-radius: 6px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.15s; }
+  .linked-item:hover { border-color: var(--accent); }
+  .linked-item .li-id { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+  .linked-item .li-desc { font-size: 13px; flex: 1; }
+  .linked-item .li-meta { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .linked-item-static { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg3); border-radius: 6px; border: 1px solid var(--border); }
+  .linked-item-static .li-desc { font-size: 13px; flex: 1; }
+  .linked-item-static .li-meta { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .notes-text { font-size: 13px; color: var(--text2); line-height: 1.6; padding: 10px 0; }
+
+  /* Inline search panel */
+  .inline-panel { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 14px; margin-top: 10px; }
+  .inline-panel input { width: 100%; font-family: var(--mono); font-size: 12px; background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; }
+  .inline-panel input:focus { outline: none; border-color: var(--accent); }
+  .inline-results { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .inline-result { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg2); border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.12s; }
+  .inline-result:hover { border-color: var(--accent); }
+  .inline-result .ir-id { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+  .inline-result .ir-desc { font-size: 12px; flex: 1; }
+  .inline-result .ir-meta { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+  /* ── Add/Edit form ── */
+  #view-form { padding: 0; }
+  .form-body { padding: 24px 20px; max-width: 680px; }
+  .form-title { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 24px; }
+  .cat-pick { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+  .cat-btn { flex: 1; min-width: 100px; font-family: var(--mono); font-size: 12px; padding: 14px 10px; border-radius: 8px; border: 2px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .cat-btn:hover { border-color: var(--accent); color: var(--text); }
+  .cat-btn.selected { border-color: var(--accent); background: rgba(74,158,255,0.1); color: var(--accent); }
+  .form-section { margin-bottom: 20px; }
+  .form-section-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .form-field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 160px; }
+  .form-field.full { flex: 100%; min-width: 100%; }
+  .form-field label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
+  .form-field label .req { color: var(--red); }
+  .form-field input, .form-field select, .form-field textarea { font-family: var(--mono); font-size: 12px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 4px; transition: border-color 0.15s; }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--accent); }
+  .form-field textarea { resize: vertical; min-height: 70px; }
+  .form-field .field-error { font-family: var(--mono); font-size: 10px; color: var(--red); }
+  .form-field input.error, .form-field select.error { border-color: var(--red); }
+  .form-footer { display: flex; gap: 10px; padding: 16px 0; border-top: 1px solid var(--border); }
+  .collapsible-trigger { font-family: var(--mono); font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 4px; }
+  .collapsible-trigger:hover { color: var(--accent); }
+  .collapsible-body { display: none; margin-top: 10px; }
+  .collapsible-body.open { display: block; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .results-table-wrap { display: none; }
+    .cards-grid { display: flex; }
+    .detail-title-row { flex-direction: column; }
+    .detail-actions { flex-direction: row; }
+    .filter-bar { flex-wrap: nowrap; }
+    .spec-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 641px) {
+    .scan-btn { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<div class="header">
+  <div class="logo-wrap">
+    <img src="Bell_Logo.jpg" alt="Bell Intercoolers" class="header-logo">
+  </div>
+  <div class="header-right">
+    <a href="dashboard.html" class="hdr-btn">Dashboard</a>
+    <a href="parts.html" class="hdr-btn">Parts</a>
+    <a href="tools.html" class="hdr-btn active">Tools</a>
+    <a href="reorder.html" class="hdr-btn">Reorder</a>
+    <button class="hdr-btn" onclick="openSettings()">&#9881; Settings</button>
+    <a href="index.html" class="hdr-btn primary">+ New PO</a>
+  </div>
+</div>
+
+<!-- ── Settings overlay ───────────────────────────────────────────────────── -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-header">
+    <h2>Settings</h2>
+    <button class="btn-close" onclick="closeSettings()">&times;</button>
+  </div>
+  <div>
+    <div class="settings-section-label">Appearance</div>
+    <div class="theme-row">
+      <span class="theme-label">Light mode</span>
+      <div class="toggle-wrap">
+        <span id="theme-label-dark">Dark</span>
+        <div class="toggle-track" id="theme-toggle" onclick="toggleTheme()"><div class="toggle-thumb"></div></div>
+        <span id="theme-label-light">Light</span>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="settings-section-label">Connection</div>
+    <div class="settings-field">
+      <label>Apps Script URL</label>
+      <input type="text" id="settings-script-url" placeholder="Paste your Web App URL here">
+    </div>
+  </div>
+  <button class="btn-save-settings" onclick="saveSettings()">Save & Reload</button>
+</div>
+
+<!-- ── View: Index ────────────────────────────────────────────────────────── -->
+<div id="view-index" style="display:none">
+  <div class="index-hero">
+    <img src="Bell_Logo.jpg" alt="Bell Intercoolers" class="hero-logo">
+    <div class="hero-tagline">High Performance Heat Exchangers</div>
+  </div>
+  <div class="search-wrap">
+    <input type="search" class="search-input" id="main-search"
+      placeholder="Search tools, inserts, holders... or scan barcode"
+      autocomplete="off" autocorrect="off" autocapitalize="off">
+    <button class="scan-btn" onclick="startCameraScan('main-search')" title="Scan barcode">&#128247;</button>
+  </div>
+  <div id="video-wrap"><video id="video-preview" muted playsinline></video></div>
+
+  <div class="filter-bar" id="filter-bar">
+    <span class="filter-label">Category</span>
+    <div class="pill-group" id="cat-pills">
+      <button class="pill active" data-cat="all"  onclick="setCat('all')">All</button>
+      <button class="pill"        data-cat="tool"  onclick="setCat('tool')">Tools</button>
+      <button class="pill"        data-cat="insert"onclick="setCat('insert')">Inserts</button>
+      <button class="pill"        data-cat="holder"onclick="setCat('holder')">Holders</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Type</span>
+    <select class="filter-select" id="filter-type" onchange="applyFilters()"><option value="">All types</option></select>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Tooling</span>
+    <div class="pill-group" id="tooling-pills">
+      <button class="pill active" data-tt="all"     onclick="setToolingType('all')">All</button>
+      <button class="pill"        data-tt="solid"    onclick="setToolingType('solid')">Solid</button>
+      <button class="pill"        data-tt="inserted" onclick="setToolingType('inserted')">Inserted</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Vendor</span>
+    <select class="filter-select" id="filter-vendor" onchange="applyFilters()"><option value="">All vendors</option></select>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Machine</span>
+    <select class="filter-select" id="filter-machine" onchange="applyFilters()"><option value="">All machines</option></select>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Dia (in)</span>
+    <div class="filter-range">
+      <input type="number" id="filter-dia-min" placeholder="min" step="0.001" onchange="applyFilters()">
+      <span>—</span>
+      <input type="number" id="filter-dia-max" placeholder="max" step="0.001" onchange="applyFilters()">
+    </div>
+    <div class="filter-divider"></div>
+    <label class="toggle-small">
+      <input type="checkbox" id="filter-low-stock" onchange="applyFilters()">
+      <span class="filter-label">Low stock only</span>
+    </label>
+    <button class="clear-btn" onclick="clearFilters()">&#10005; Clear filters</button>
+  </div>
+
+  <div class="results-header">
+    <span id="results-count">—</span>
+  </div>
+
+  <!-- Desktop table -->
+  <div class="results-table-wrap" id="results-table-wrap">
+    <table class="results-table" id="results-table">
+      <thead>
+        <tr>
+          <th onclick="sortBy('id')">ID</th>
+          <th onclick="sortBy('type')">Type</th>
+          <th onclick="sortBy('description')">Description</th>
+          <th onclick="sortBy('vendor')">Vendor</th>
+          <th onclick="sortBy('productNumber')">Product #</th>
+          <th onclick="sortBy('diameter')">Diameter</th>
+          <th onclick="sortBy('qty')">Qty</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="results-tbody"></tbody>
+    </table>
+    <div id="empty-state" style="display:none"></div>
+  </div>
+
+  <!-- Mobile cards -->
+  <div class="cards-grid" id="cards-grid"></div>
+</div>
+
+<!-- ── View: Tool detail ───────────────────────────────────────────────────── -->
+<div id="view-detail" style="display:none">
+  <div class="detail-nav">
+    <button class="back-btn" onclick="showIndex()">&#8592; Back to results</button>
+  </div>
+  <div class="detail-body" id="tool-detail-body"></div>
+</div>
+
+<!-- ── View: Insert detail ────────────────────────────────────────────────── -->
+<div id="view-insert-detail" style="display:none">
+  <div class="detail-nav">
+    <button class="back-btn" id="insert-back-btn" onclick="showIndex()">&#8592; Back to results</button>
+  </div>
+  <div class="detail-body" id="insert-detail-body"></div>
+</div>
+
+<!-- ── View: Add/Edit form ────────────────────────────────────────────────── -->
+<div id="view-form" style="display:none">
+  <div class="detail-nav">
+    <button class="back-btn" onclick="cancelForm()">&#8592; Cancel</button>
+  </div>
+  <div class="form-body" id="form-body"></div>
+</div>
+
+<!-- ── Loading / error states ────────────────────────────────────────────── -->
+<div id="view-loading" class="loading">
+  <div class="spinner"></div>
+  <span>Loading tooling data...</span>
+</div>
+<div id="view-error" style="display:none" class="loading">
+  <span id="error-msg" style="color:var(--red)"></span>
+  <button class="btn" onclick="loadData()">Retry</button>
+  <button class="btn" onclick="openSettings()">Check Settings</button>
+</div>
+
+<script>
+// ── Config & theme ─────────────────────────────────────────────────────────
+const THEME_KEY  = 'bic_theme';
+const CONFIG_KEY = 'bic_config';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function applyTheme(theme) {
+  document.body.classList.toggle('light', theme === 'light');
+  const t = document.getElementById('theme-toggle');
+  if (t) t.classList.toggle('on', theme === 'light');
+}
+
+function toggleTheme() {
+  const cur = localStorage.getItem(THEME_KEY) || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+function openSettings() {
+  const cfg = getConfig();
+  document.getElementById('settings-script-url').value = cfg.script || '';
+  const theme = localStorage.getItem(THEME_KEY) || 'dark';
+  document.getElementById('theme-toggle').classList.toggle('on', theme === 'light');
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-panel').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
+}
+
+function saveSettings() {
+  const url = document.getElementById('settings-script-url').value.trim();
+  const cfg = getConfig();
+  cfg.script = url;
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  location.reload();
+}
+
+// Apply theme on load
+// Pre-seed the Apps Script URL if not yet configured
+(function() {
+  const DEFAULT_SCRIPT = 'https://script.google.com/macros/s/AKfycbwPhuL9gsYgewRQCRcbyguqw3ogJUOXniqi9C_voFQZQlK_76LNXWyBLgkcCCs-yk3Feg/exec';
+  try {
+    const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    if (!cfg.script) { cfg.script = DEFAULT_SCRIPT; localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+  } catch(e) {}
+})();
+applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+// ── State ──────────────────────────────────────────────────────────────────
+const state = {
+  tools: [], inserts: [], holders: [], accessories: [],
+  insertToolLinks: [], toolPartLinks: [], toolMachineInventory: [], machines: [],
+  filtered: [],
+  sortField: 'description', sortDir: 1,
+  cat: 'all', toolingType: 'all',
+  lastQuery: '', lastScanned: ''
+};
+
+// ── API ────────────────────────────────────────────────────────────────────
+async function callScript(params) {
+  const cfg = getConfig();
+  if (!cfg.script) throw new Error('No Apps Script URL. Open Settings and add the URL.');
+  const qs = Object.entries(params)
+    .map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
+    .join('&');
+  const resp = await fetch(cfg.script + '?' + qs);
+  return resp.json();
+}
+
+let saveDebounceTimers = {};
+function debounceSave(key, fn, ms = 800) {
+  clearTimeout(saveDebounceTimers[key]);
+  saveDebounceTimers[key] = setTimeout(fn, ms);
+}
+
+// ── Load data ──────────────────────────────────────────────────────────────
+async function loadData() {
+  showView('loading');
+  try {
+    const d = await callScript({ action: 'getToolingData' });
+    if (!d.success) throw new Error(d.error || 'Failed to load tooling data.');
+    state.tools               = d.tools || [];
+    state.inserts             = d.inserts || [];
+    state.holders             = d.holders || [];
+    state.accessories         = d.accessories || [];
+    state.insertToolLinks     = d.insertToolLinks || [];
+    state.toolPartLinks       = d.toolPartLinks || [];
+    state.toolMachineInventory= d.toolMachineInventory || [];
+    state.machines            = d.machines || [];
+    populateFilterOptions();
+    applyFilters();
+    showView('index');
+  } catch (err) {
+    document.getElementById('error-msg').textContent = err.message;
+    showView('error');
+  }
+}
+
+// ── View management ────────────────────────────────────────────────────────
+function showView(name) {
+  ['index','detail','insert-detail','form','loading','error'].forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.style.display = 'none';
+  });
+  const target = document.getElementById('view-' + name);
+  if (target) target.style.display = 'block';
+}
+
+function showIndex() {
+  applyFilters();
+  showView('index');
+}
+
+// ── Search & filter ────────────────────────────────────────────────────────
+function wildcardMatch(str, pattern) {
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp('^' + escaped.replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 'i');
+  return regex.test(str);
+}
+
+function searchItems(query, items) {
+  if (!query) return items;
+  const q = query.toLowerCase();
+  if (q.includes('*') || q.includes('?')) {
+    return items.filter(item =>
+      wildcardMatch(item.productNumber || '', query) ||
+      wildcardMatch(item.description || '', query) ||
+      wildcardMatch(item.vendor || '', query)
+    );
+  }
+  return items.filter(item =>
+    Object.values(item).some(v => String(v).toLowerCase().includes(q))
+  );
+}
+
+function getItemQty(item) {
+  if (item._cat === 'tool') {
+    const machineQty = state.toolMachineInventory
+      .filter(m => String(m.toolId) === String(item.toolId))
+      .reduce((s, m) => s + (Number(m.qty) || 0), 0);
+    return (Number(item.stockQty) || 0) + machineQty;
+  }
+  if (item._cat === 'insert') return Number(item.qtyOnHand) || 0;
+  if (item._cat === 'holder') return Number(item.qtyOnHand) || 0;
+  return 0;
+}
+
+function getItemMinQty(item) {
+  return Number(item.minQty) || 0;
+}
+
+function getAllItems() {
+  const tools   = state.tools.map(t => ({ ...t, _cat: 'tool',   _id: t.toolId   }));
+  const inserts = state.inserts.map(i=> ({ ...i, _cat: 'insert', _id: i.insertId }));
+  const holders = state.holders.map(h=> ({ ...h, _cat: 'holder', _id: h.holderId }));
+  return [...tools, ...inserts, ...holders];
+}
+
+function applyFilters() {
+  const query    = document.getElementById('main-search').value.trim();
+  const cat      = state.cat;
+  const tt       = state.toolingType;
+  const fType    = document.getElementById('filter-type').value;
+  const fVendor  = document.getElementById('filter-vendor').value;
+  const fMachine = document.getElementById('filter-machine').value;
+  const fDiaMin  = parseFloat(document.getElementById('filter-dia-min').value) || null;
+  const fDiaMax  = parseFloat(document.getElementById('filter-dia-max').value) || null;
+  const fLow     = document.getElementById('filter-low-stock').checked;
+
+  let items = getAllItems();
+
+  // Category
+  if (cat !== 'all') items = items.filter(i => i._cat === cat);
+
+  // Search
+  if (query) {
+    const searched = searchItems(query, items);
+    if (searched.length === 0 && state.lastScanned === query) {
+      showNotFound(query);
+      return;
+    }
+    items = searched;
+  }
+
+  // Type
+  if (fType) items = items.filter(i => (i.type || '').toLowerCase() === fType.toLowerCase());
+
+  // Tooling type (tools only)
+  if (tt !== 'all') items = items.filter(i => i._cat !== 'tool' || (i.toolingType || '').toLowerCase() === tt);
+
+  // Vendor
+  if (fVendor) items = items.filter(i => (i.vendor || '') === fVendor);
+
+  // Machine filter
+  if (fMachine === '__none__') {
+    const toolsWithMachine = new Set(state.toolMachineInventory.map(m => m.toolId));
+    items = items.filter(i => i._cat !== 'tool' || !toolsWithMachine.has(i.toolId));
+  } else if (fMachine) {
+    const machine = state.machines.find(m => m.machineId === fMachine);
+    if (machine) {
+      const toolsInMachine = new Set(
+        state.toolMachineInventory.filter(m => m.machineId === fMachine && Number(m.qty) > 0).map(m => m.toolId)
+      );
+      items = items.filter(i => i._cat !== 'tool' || toolsInMachine.has(i.toolId));
+    }
+  }
+
+  // Diameter range (tools with diameter in inches)
+  if (fDiaMin !== null || fDiaMax !== null) {
+    items = items.filter(i => {
+      if (!i.diameter) return false;
+      const dia = Number(i.diameter);
+      const unit = (i.diameterUnit || 'in').toLowerCase();
+      const diaIn = unit === 'mm' ? dia / 25.4 : dia;
+      if (fDiaMin !== null && diaIn < fDiaMin) return false;
+      if (fDiaMax !== null && diaIn > fDiaMax) return false;
+      return true;
+    });
+  }
+
+  // Low stock
+  if (fLow) {
+    items = items.filter(i => {
+      const qty = getItemQty(i);
+      const min = getItemMinQty(i);
+      return min > 0 && qty < min;
+    });
+  }
+
+  // Sort
+  items.sort((a, b) => {
+    let av = a[state.sortField] || a._id || '';
+    let bv = b[state.sortField] || b._id || '';
+    if (state.sortField === 'qty') { av = getItemQty(a); bv = getItemQty(b); }
+    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * state.sortDir;
+    return String(av).localeCompare(String(bv)) * state.sortDir;
+  });
+
+  state.filtered = items;
+  renderResults(items);
+  state.lastScanned = '';
+}
+
+function populateFilterOptions() {
+  const items = getAllItems();
+
+  // Types
+  const types = [...new Set(state.tools.map(t => t.type).filter(Boolean))].sort();
+  const typeEl = document.getElementById('filter-type');
+  typeEl.innerHTML = '<option value="">All types</option>';
+  types.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; typeEl.appendChild(o); });
+
+  // Vendors
+  const vendors = [...new Set(items.map(i => i.vendor).filter(Boolean))].sort();
+  const vendorEl = document.getElementById('filter-vendor');
+  vendorEl.innerHTML = '<option value="">All vendors</option>';
+  vendors.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; vendorEl.appendChild(o); });
+
+  // Machines
+  const machineEl = document.getElementById('filter-machine');
+  machineEl.innerHTML = '<option value="">All machines</option>';
+  state.machines.forEach(m => { const o = document.createElement('option'); o.value = m.machineId; o.textContent = m.name; machineEl.appendChild(o); });
+  const noMach = document.createElement('option'); noMach.value = '__none__'; noMach.textContent = 'Not in any machine'; machineEl.appendChild(noMach);
+}
+
+function setCat(cat) {
+  state.cat = cat;
+  document.querySelectorAll('#cat-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.cat === cat));
+  applyFilters();
+}
+
+function setToolingType(tt) {
+  state.toolingType = tt;
+  document.querySelectorAll('#tooling-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.tt === tt));
+  applyFilters();
+}
+
+function clearFilters() {
+  state.cat = 'all'; state.toolingType = 'all';
+  document.querySelectorAll('#cat-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.cat === 'all'));
+  document.querySelectorAll('#tooling-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.tt === 'all'));
+  document.getElementById('filter-type').value    = '';
+  document.getElementById('filter-vendor').value  = '';
+  document.getElementById('filter-machine').value = '';
+  document.getElementById('filter-dia-min').value = '';
+  document.getElementById('filter-dia-max').value = '';
+  document.getElementById('filter-low-stock').checked = false;
+  document.getElementById('main-search').value = '';
+  applyFilters();
+}
+
+function sortBy(field) {
+  if (state.sortField === field) { state.sortDir *= -1; }
+  else { state.sortField = field; state.sortDir = 1; }
+  document.querySelectorAll('.results-table th').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+  });
+  const headers = ['id','type','description','vendor','productNumber','diameter','qty',''];
+  const idx = headers.indexOf(field);
+  if (idx >= 0) {
+    const ths = document.querySelectorAll('.results-table th');
+    if (ths[idx]) ths[idx].classList.add(state.sortDir === 1 ? 'sort-asc' : 'sort-desc');
+  }
+  renderResults(state.filtered);
+}
+
+// ── Render results ─────────────────────────────────────────────────────────
+function statusBadge(qty, min) {
+  if (min <= 0) return `<span class="status-ok">OK</span>`;
+  if (qty === 0) return `<span class="status-reorder">REORDER</span>`;
+  if (qty < min) return `<span class="status-low">LOW</span>`;
+  return `<span class="status-ok">OK</span>`;
+}
+
+function renderResults(items) {
+  document.getElementById('results-count').textContent = `${items.length} result${items.length !== 1 ? 's' : ''}`;
+
+  // Table
+  const tbody = document.getElementById('results-tbody');
+  if (items.length === 0) {
+    document.getElementById('results-table-wrap').style.display = 'none';
+    document.getElementById('cards-grid').style.display = 'none';
+    const es = document.getElementById('empty-state');
+    es.style.display = 'flex';
+    es.innerHTML = `<div class="not-found"><p>No items match your search or filters.</p><button class="btn" onclick="clearFilters()">Clear filters</button></div>`;
+    return;
+  }
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('results-table-wrap').style.display = '';
+
+  tbody.innerHTML = items.map(item => {
+    const qty = getItemQty(item);
+    const min = getItemMinQty(item);
+    const dia = item.diameter ? item.diameter + (item.diameterUnit || 'in') : '—';
+    const desc = esc(item.description || '—');
+    return `<tr onclick="openDetail('${esc(item._id)}','${item._cat}')">
+      <td class="id-cell">${esc(item._id || '')}</td>
+      <td><span class="type-badge">${esc(item.type || item._cat)}</span></td>
+      <td>${desc}</td>
+      <td>${esc(item.vendor || '—')}</td>
+      <td style="font-family:var(--mono);font-size:11px">${esc(item.productNumber || '—')}</td>
+      <td style="font-family:var(--mono);font-size:12px">${dia}</td>
+      <td style="font-family:var(--mono);font-size:12px">${qty}</td>
+      <td>${statusBadge(qty, min)}</td>
+    </tr>`;
+  }).join('');
+
+  // Cards (mobile)
+  const cards = document.getElementById('cards-grid');
+  cards.innerHTML = items.map(item => {
+    const qty = getItemQty(item);
+    const min = getItemMinQty(item);
+    const qtyClass = (min > 0 && qty < min) ? 'qty-reorder' : 'qty-ok';
+    return `<div class="card" onclick="openDetail('${esc(item._id)}','${item._cat}')">
+      <div class="card-top">
+        <span class="type-badge">${esc(item.type || item._cat)}</span>
+        <span class="id-cell">${esc(item._id || '')}</span>
+      </div>
+      <div class="card-desc">${esc(item.description || '—')}</div>
+      <div class="card-sub">${esc(item.vendor || '')}${item.productNumber ? ' · ' + esc(item.productNumber) : ''}</div>
+      <div class="card-bottom">
+        <span class="qty-pill ${qtyClass}">Qty: ${qty}</span>
+        ${item.diameter ? `<span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${item.diameter}${item.diameterUnit||'in'}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showNotFound(query) {
+  document.getElementById('results-count').textContent = '0 results';
+  document.getElementById('results-table-wrap').style.display = 'none';
+  document.getElementById('cards-grid').style.display = 'none';
+  const es = document.getElementById('empty-state');
+  es.style.display = 'flex';
+  es.innerHTML = `<div class="not-found">
+    <p>No tool found for</p>
+    <div class="nf-value">${esc(query)}</div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="openAddForm('tool','${esc(query)}')">+ Add as new tool</button>
+      <button class="btn" onclick="clearFilters()">Cancel</button>
+    </div>
+  </div>`;
+}
+
+// ── Open detail views ──────────────────────────────────────────────────────
+function openDetail(id, cat) {
+  if (cat === 'tool')   { renderToolDetail(id);   showView('detail'); }
+  if (cat === 'insert') { renderInsertDetail(id); showView('insert-detail'); }
+  if (cat === 'holder') { renderHolderDetail(id); showView('detail'); }
+}
+
+// ── Tool detail ────────────────────────────────────────────────────────────
+function renderToolDetail(toolId) {
+  const tool = state.tools.find(t => String(t.toolId) === String(toolId));
+  if (!tool) return;
+
+  const invRows = state.toolMachineInventory.filter(m => String(m.toolId) === String(toolId));
+  const machineQty = invRows.reduce((s, m) => s + (Number(m.qty) || 0), 0);
+  const stockQty = Number(tool.stockQty) || 0;
+  const totalQty = stockQty + machineQty;
+  const minQty   = Number(tool.minQty) || 0;
+
+  const insertLinks = state.insertToolLinks.filter(l => String(l.toolId) === String(toolId));
+  const partLinks   = state.toolPartLinks.filter(l => String(l.toolId) === String(toolId));
+  const accessories = state.accessories.filter(a => String(a.toolId) === String(toolId));
+
+  let html = `
+    <div class="detail-title-row">
+      <div>
+        <div class="detail-badges">
+          <span class="badge id">${esc(tool.toolId)}</span>
+          ${tool.type ? `<span class="badge">${esc(tool.type)}</span>` : ''}
+          ${tool.toolingType ? `<span class="badge ${tool.toolingType.toLowerCase()}">${esc(tool.toolingType)}</span>` : ''}
+        </div>
+        <div class="detail-name">${esc(tool.description || '—')}</div>
+        <div class="detail-meta">
+          ${tool.vendor ? esc(tool.vendor) : ''}
+          ${tool.productNumber ? `· <span style="font-family:var(--mono)">${esc(tool.productNumber)}</span>` : ''}
+          ${tool.productUrl ? `· <a href="${esc(tool.productUrl)}" target="_blank" rel="noopener">&#128279; Product link</a>` : ''}
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn" onclick="openEditForm('tool','${esc(toolId)}')">Edit</button>
+        <button class="hdr-btn" onclick="printLabel('${esc(toolId)}', 'tool')">&#127991; Print Label</button>
+      </div>
+    </div>`;
+
+  // Specifications
+  const specs = [
+    tool.diameter   ? { label: 'Diameter',      val: tool.diameter + (tool.diameterUnit || 'in') } : null,
+    tool.flutes     ? { label: 'Flutes',         val: tool.flutes } : null,
+    tool.oal        ? { label: 'OAL',            val: tool.oal + (tool.oalUnit || 'in') } : null,
+    tool.cornerRadius ? { label: 'Corner Radius', val: tool.cornerRadius + '"' } : null,
+    tool.tipAngle   ? { label: 'Tip Angle',      val: tool.tipAngle + '°' } : null,
+    tool.taperAngle ? { label: 'Taper Angle',    val: tool.taperAngle + '°' } : null,
+    tool.threadPitch? { label: 'Thread Pitch',   val: tool.threadPitch } : null,
+    tool.bodyMaterial ? { label: 'Body Material', val: tool.bodyMaterial } : null,
+  ].filter(Boolean);
+
+  if (specs.length) {
+    html += `<div class="section-sep">Specifications</div>
+    <div class="spec-grid">
+      ${specs.map(s => `<div class="spec-item"><div class="spec-label">${s.label}</div><div class="spec-value">${esc(String(s.val))}</div></div>`).join('')}
+    </div>`;
+  }
+
+  // Inventory
+  html += `<div class="section-sep">Inventory</div>
+  <table class="inv-table">`;
+
+  state.machines.forEach(machine => {
+    const rec = invRows.find(m => m.machineId === machine.machineId);
+    const qty = rec ? Number(rec.qty) || 0 : 0;
+    const inMag = rec ? rec.inMagazine === 'Y' : false;
+    const recId = rec ? rec.recordId : '';
+    html += `<tr>
+      <td>${esc(machine.name)}</td>
+      <td>
+        <label class="mag-toggle">
+          <input type="checkbox" ${inMag ? 'checked' : ''}
+            onchange="saveMachineInv('${esc(toolId)}','${esc(machine.machineId)}',null,this.checked?'Y':'N')">
+          In Magazine
+        </label>
+      </td>
+      <td>
+        <div class="qty-ctrl">
+          <button onclick="adjustMachineQty('${esc(toolId)}','${esc(machine.machineId)}','${esc(machine.name)}',-1)">&#9660;</button>
+          <input type="number" min="0" value="${qty}"
+            id="mach-qty-${esc(machine.machineId)}-${esc(toolId)}"
+            onchange="debouncedMachineQty('${esc(toolId)}','${esc(machine.machineId)}',this.value)">
+          <button onclick="adjustMachineQty('${esc(toolId)}','${esc(machine.machineId)}','${esc(machine.name)}',1)">&#9650;</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  html += `<tr>
+    <td>Stock (unassigned)</td>
+    <td></td>
+    <td>
+      <div class="qty-ctrl">
+        <button onclick="adjustStockQty('${esc(toolId)}',-1)">&#9660;</button>
+        <input type="number" min="0" value="${stockQty}" id="stock-qty-${esc(toolId)}"
+          onchange="debouncedStockQty('${esc(toolId)}',this.value)">
+        <button onclick="adjustStockQty('${esc(toolId)}',1)">&#9650;</button>
+      </div>
+    </td>
+  </tr></table>
+  <div class="inv-summary">
+    <span class="total" id="inv-total-${esc(toolId)}">Total on hand: ${totalQty}</span>
+    <span>Min qty: ${minQty}</span>
+    ${statusBadge(totalQty, minQty)}
+    ${tool.lastPrice ? `<span>Last price: $${Number(tool.lastPrice).toFixed(2)}</span>` : ''}
+    ${tool.lastOrderDate ? `<span>Last order: ${esc(tool.lastOrderDate)}</span>` : ''}
+    <span class="saving-hint" id="saving-hint-${esc(toolId)}"></span>
+  </div>`;
+
+  // Compatible Inserts (inserted tooling type only)
+  if ((tool.toolingType || '').toLowerCase() === 'inserted') {
+    html += `<div class="section-sep">Compatible Inserts</div>
+    <div class="linked-list" id="inserts-list-${esc(toolId)}">`;
+    if (insertLinks.length === 0) {
+      html += `<div style="color:var(--text3);font-size:13px">No inserts linked.</div>`;
+    } else {
+      insertLinks.forEach(link => {
+        const ins = state.inserts.find(i => i.insertId === link.insertId);
+        if (ins) {
+          html += `<div class="linked-item" onclick="openDetail('${esc(ins.insertId)}','insert')">
+            <span class="li-id">${esc(ins.insertId)}</span>
+            <span class="li-desc">${esc(ins.description || ins.insertGeometry || '—')}</span>
+            <span class="li-meta">${esc(ins.grade || '')} ${esc(ins.materialApplication || '')}</span>
+          </div>`;
+        }
+      });
+    }
+    html += `</div>
+    <button class="btn" onclick="toggleInsertLinkPanel('${esc(toolId)}')">+ Link Insert</button>
+    <div id="insert-link-panel-${esc(toolId)}" style="display:none">
+      <div class="inline-panel">
+        <input type="search" placeholder="Search inserts..." autocomplete="off"
+          oninput="searchInlineInserts('${esc(toolId)}', this.value)">
+        <div class="inline-results" id="insert-link-results-${esc(toolId)}"></div>
+      </div>
+    </div>`;
+  }
+
+  // Parts using this tool
+  html += `<div class="section-sep">Parts Using This Tool</div>
+  <div class="linked-list" id="parts-list-${esc(toolId)}">`;
+  if (partLinks.length === 0) {
+    html += `<div style="color:var(--text3);font-size:13px">No parts linked.</div>`;
+  } else {
+    partLinks.forEach(link => {
+      html += `<div class="linked-item-static">
+        <span class="li-id" style="color:var(--text2)">${esc(link.partNumber)}</span>
+        ${link.fusionTNum ? `<span class="li-meta">${esc(link.fusionTNum)}</span>` : ''}
+        <span class="li-meta">${esc(link.source || '')}</span>
+        <button class="btn danger" style="padding:3px 8px;font-size:10px" onclick="removePartLink('${esc(link.linkId)}','${esc(toolId)}')">✕</button>
+      </div>`;
+    });
+  }
+  html += `</div>
+  <button class="btn" onclick="togglePartLinkPanel('${esc(toolId)}')">+ Link Part</button>
+  <div id="part-link-panel-${esc(toolId)}" style="display:none">
+    <div class="inline-panel">
+      <input type="search" placeholder="Search part numbers..." autocomplete="off"
+        oninput="searchInlineParts('${esc(toolId)}', this.value)">
+      <div class="inline-results" id="part-link-results-${esc(toolId)}"></div>
+    </div>
+  </div>`;
+
+  // Accessories
+  if (accessories.length > 0) {
+    html += `<div class="section-sep">Accessories</div>
+    <div class="linked-list">
+      ${accessories.map(a => `<div class="linked-item-static">
+        <span class="li-id" style="color:var(--text2)">${esc(a.type)}</span>
+        <span class="li-desc">${esc(a.description || '')}</span>
+        <span class="li-meta">${esc(a.driveType || '')}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // Notes
+  if (tool.notes) {
+    html += `<div class="section-sep">Notes</div>
+    <div class="notes-text">${esc(tool.notes)}</div>`;
+  }
+
+  document.getElementById('tool-detail-body').innerHTML = html;
+}
+
+// ── Inventory save helpers ─────────────────────────────────────────────────
+function showSavingHint(toolId, msg) {
+  const el = document.getElementById('saving-hint-' + toolId);
+  if (el) { el.textContent = msg; setTimeout(() => { if(el) el.textContent = ''; }, 2000); }
+}
+
+function debouncedMachineQty(toolId, machineId, val) {
+  debounceSave('mach-' + toolId + '-' + machineId, async () => {
+    await saveMachineInv(toolId, machineId, val, null);
+  });
+}
+
+function debouncedStockQty(toolId, val) {
+  debounceSave('stock-' + toolId, async () => {
+    const tool = state.tools.find(t => t.toolId === toolId);
+    if (!tool) return;
+    try {
+      const r = await callScript({ action: 'updateToolQty', toolId, qty: val });
+      if (r.success) {
+        tool.stockQty = Number(val);
+        updateTotalDisplay(toolId);
+        showSavingHint(toolId, '✓ Saved');
+      }
+    } catch(e) { showSavingHint(toolId, '✗ Error'); }
+  });
+}
+
+async function saveMachineInv(toolId, machineId, qty, inMagazine) {
+  const rec = state.toolMachineInventory.find(m => m.toolId === toolId && m.machineId === machineId);
+  const currentQty  = qty !== null ? qty : (rec ? rec.qty : 0);
+  const currentMag  = inMagazine !== null ? inMagazine : (rec ? rec.inMagazine : 'N');
+  try {
+    const r = await callScript({ action: 'updateToolMachineInventory', toolId, machineId, qty: currentQty, inMagazine: currentMag });
+    if (r.success) {
+      if (!rec) { state.toolMachineInventory.push({ recordId: r.recordId, toolId, machineId, qty: Number(currentQty), inMagazine: currentMag }); }
+      else { rec.qty = Number(currentQty); rec.inMagazine = currentMag; }
+      updateTotalDisplay(toolId);
+      showSavingHint(toolId, '✓ Saved');
+    }
+  } catch(e) { showSavingHint(toolId, '✗ Error'); }
+}
+
+function adjustMachineQty(toolId, machineId, machineName, delta) {
+  const inputId = `mach-qty-${machineId}-${toolId}`;
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const newVal = Math.max(0, (Number(input.value) || 0) + delta);
+  input.value = newVal;
+  debouncedMachineQty(toolId, machineId, newVal);
+}
+
+function adjustStockQty(toolId, delta) {
+  const input = document.getElementById('stock-qty-' + toolId);
+  if (!input) return;
+  const newVal = Math.max(0, (Number(input.value) || 0) + delta);
+  input.value = newVal;
+  debouncedStockQty(toolId, newVal);
+}
+
+function updateTotalDisplay(toolId) {
+  const tool = state.tools.find(t => t.toolId === toolId);
+  if (!tool) return;
+  const machineQty = state.toolMachineInventory
+    .filter(m => m.toolId === toolId)
+    .reduce((s, m) => s + (Number(m.qty) || 0), 0);
+  const total = (Number(tool.stockQty) || 0) + machineQty;
+  const el = document.getElementById('inv-total-' + toolId);
+  if (el) el.textContent = 'Total on hand: ' + total;
+}
+
+// ── Insert / Part link panels ──────────────────────────────────────────────
+function toggleInsertLinkPanel(toolId) {
+  const panel = document.getElementById('insert-link-panel-' + toolId);
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function searchInlineInserts(toolId, query) {
+  const results = document.getElementById('insert-link-results-' + toolId);
+  const q = query.toLowerCase().trim();
+  const items = q
+    ? state.inserts.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(q)))
+    : state.inserts.slice(0, 20);
+  results.innerHTML = items.map(ins => `
+    <div class="inline-result" onclick="addInsertLink('${esc(toolId)}','${esc(ins.insertId)}')">
+      <span class="ir-id">${esc(ins.insertId)}</span>
+      <span class="ir-desc">${esc(ins.description || ins.insertGeometry || '—')}</span>
+      <span class="ir-meta">${esc(ins.grade || '')}</span>
+    </div>`).join('');
+}
+
+async function addInsertLink(toolId, insertId) {
+  const r = await callScript({ action: 'addInsertToolLink', toolId, insertId });
+  if (r.success) {
+    state.insertToolLinks.push({ linkId: r.linkId, toolId, insertId, notes: '' });
+    renderToolDetail(toolId);
+  } else {
+    alert(r.error || 'Failed to link insert.');
+  }
+}
+
+function togglePartLinkPanel(toolId) {
+  const panel = document.getElementById('part-link-panel-' + toolId);
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function searchInlineParts(toolId, query) {
+  const results = document.getElementById('part-link-results-' + toolId);
+  const q = query.toLowerCase().trim();
+  if (!q) { results.innerHTML = ''; return; }
+  // Search part numbers from toolPartLinks (all known parts) + fallback to PO line items
+  const known = [...new Set(state.toolPartLinks.map(l => l.partNumber))];
+  const matched = known.filter(p => p.toLowerCase().includes(q)).slice(0, 20);
+  // Also show free-text add option
+  results.innerHTML = matched.map(pn => `
+    <div class="inline-result" onclick="addPartLink('${esc(toolId)}','${esc(pn)}','','')">
+      <span class="ir-desc">${esc(pn)}</span>
+    </div>`).join('') +
+    (q.length >= 3 ? `<div class="inline-result" onclick="addPartLink('${esc(toolId)}','${esc(query)}','','')">
+      <span class="ir-id">+</span><span class="ir-desc">Add "${esc(query)}"</span>
+    </div>` : '');
+}
+
+async function addPartLink(toolId, partNumber, fusionTNum, source) {
+  const r = await callScript({ action: 'addToolPartLink', toolId, partNumber, fusionTNum: fusionTNum || '', source: source || 'manual' });
+  if (r.success) {
+    state.toolPartLinks.push({ linkId: r.linkId, partNumber, toolId, fusionTNum: fusionTNum||'', source: source||'manual', fusionFile:'', notes:'' });
+    renderToolDetail(toolId);
+  } else {
+    alert(r.error || 'Failed to link part.');
+  }
+}
+
+async function removePartLink(linkId, toolId) {
+  if (!confirm('Remove this part link?')) return;
+  const r = await callScript({ action: 'removeToolPartLink', linkId });
+  if (r.success) {
+    const idx = state.toolPartLinks.findIndex(l => l.linkId === linkId);
+    if (idx >= 0) state.toolPartLinks.splice(idx, 1);
+    renderToolDetail(toolId);
+  }
+}
+
+// ── Insert detail ──────────────────────────────────────────────────────────
+function renderInsertDetail(insertId) {
+  const ins = state.inserts.find(i => String(i.insertId) === String(insertId));
+  if (!ins) return;
+
+  const toolLinks = state.insertToolLinks.filter(l => String(l.insertId) === String(insertId));
+  const qty = Number(ins.qtyOnHand) || 0;
+  const min = Number(ins.minQty) || 0;
+
+  let html = `
+    <div class="detail-title-row">
+      <div>
+        <div class="detail-badges">
+          <span class="badge id">${esc(ins.insertId)}</span>
+          ${ins.insertGeometry ? `<span class="badge">${esc(ins.insertGeometry)}</span>` : ''}
+        </div>
+        <div class="detail-name">${esc(ins.description || ins.insertGeometry || '—')}</div>
+        <div class="detail-meta">
+          ${ins.vendor ? esc(ins.vendor) : ''}
+          ${ins.productNumber ? `· <span style="font-family:var(--mono)">${esc(ins.productNumber)}</span>` : ''}
+          ${ins.productUrl ? `· <a href="${esc(ins.productUrl)}" target="_blank" rel="noopener">&#128279; Product link</a>` : ''}
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn" onclick="openEditForm('insert','${esc(insertId)}')">Edit</button>
+        <button class="hdr-btn" onclick="printLabel('${esc(insertId)}', 'insert')">&#127991; Print Label</button>
+      </div>
+    </div>`;
+
+  const specs = [
+    ins.insertGeometry     ? { label: 'Geometry',  val: ins.insertGeometry } : null,
+    ins.grade              ? { label: 'Grade',      val: ins.grade } : null,
+    ins.materialApplication? { label: 'Material App',val: ins.materialApplication } : null,
+    ins.noseRadius         ? { label: 'Nose Radius', val: ins.noseRadius } : null,
+    ins.icSize             ? { label: 'IC Size',     val: ins.icSize } : null,
+  ].filter(Boolean);
+
+  if (specs.length) {
+    html += `<div class="section-sep">Specifications</div>
+    <div class="spec-grid">
+      ${specs.map(s => `<div class="spec-item"><div class="spec-label">${s.label}</div><div class="spec-value">${esc(String(s.val))}</div></div>`).join('')}
+    </div>`;
+  }
+
+  html += `<div class="section-sep">Inventory</div>
+  <div class="inv-summary" style="padding:10px 0">
+    <span class="total">Qty on hand: ${qty}</span>
+    <span>Min qty: ${min}</span>
+    ${statusBadge(qty, min)}
+    ${ins.lastPrice ? `<span>Last price: $${Number(ins.lastPrice).toFixed(2)}</span>` : ''}
+    ${ins.lastOrderDate ? `<span>Last order: ${esc(ins.lastOrderDate)}</span>` : ''}
+  </div>
+  <div style="margin-top:8px">
+    <div class="qty-ctrl">
+      <button onclick="adjustInsertQty('${esc(insertId)}',-1)">&#9660;</button>
+      <input type="number" min="0" value="${qty}" id="insert-qty-${esc(insertId)}"
+        onchange="debouncedInsertQty('${esc(insertId)}',this.value)">
+      <button onclick="adjustInsertQty('${esc(insertId)}',1)">&#9650;</button>
+    </div>
+    <span class="saving-hint" id="saving-hint-ins-${esc(insertId)}"></span>
+  </div>`;
+
+  // Compatible tool bodies
+  html += `<div class="section-sep">Compatible Tool Bodies</div>
+  <div class="linked-list">`;
+  if (toolLinks.length === 0) {
+    html += `<div style="color:var(--text3);font-size:13px">No tool bodies linked.</div>`;
+  } else {
+    toolLinks.forEach(link => {
+      const tool = state.tools.find(t => t.toolId === link.toolId);
+      if (tool) {
+        html += `<div class="linked-item" onclick="openDetail('${esc(tool.toolId)}','tool')">
+          <span class="li-id">${esc(tool.toolId)}</span>
+          <span class="li-desc">${esc(tool.description || '—')}</span>
+          <span class="li-meta">${esc(tool.vendor || '')}</span>
+        </div>`;
+      }
+    });
+  }
+  html += `</div>`;
+
+  if (ins.notes) {
+    html += `<div class="section-sep">Notes</div><div class="notes-text">${esc(ins.notes)}</div>`;
+  }
+
+  document.getElementById('insert-back-btn').onclick = () => showIndex();
+  document.getElementById('insert-detail-body').innerHTML = html;
+}
+
+function debouncedInsertQty(insertId, val) {
+  debounceSave('ins-' + insertId, async () => {
+    const ins = state.inserts.find(i => i.insertId === insertId);
+    if (!ins) return;
+    const r = await callScript({ action: 'updateInsertQty', insertId, qty: val });
+    if (r.success) {
+      ins.qtyOnHand = Number(val);
+      const hint = document.getElementById('saving-hint-ins-' + insertId);
+      if (hint) { hint.textContent = '✓ Saved'; setTimeout(() => { if(hint) hint.textContent=''; }, 2000); }
+    }
+  });
+}
+
+function adjustInsertQty(insertId, delta) {
+  const input = document.getElementById('insert-qty-' + insertId);
+  if (!input) return;
+  const newVal = Math.max(0, (Number(input.value) || 0) + delta);
+  input.value = newVal;
+  debouncedInsertQty(insertId, newVal);
+}
+
+// Holder detail: reuse tool detail layout
+function renderHolderDetail(holderId) {
+  const h = state.holders.find(hh => String(hh.holderId) === String(holderId));
+  if (!h) return;
+  const qty = Number(h.qtyOnHand) || 0;
+  const min = Number(h.minQty) || 0;
+
+  let html = `
+    <div class="detail-title-row">
+      <div>
+        <div class="detail-badges">
+          <span class="badge id">${esc(h.holderId)}</span>
+          ${h.type ? `<span class="badge">${esc(h.type)}</span>` : ''}
+          ${h.taper ? `<span class="badge">${esc(h.taper)}</span>` : ''}
+        </div>
+        <div class="detail-name">${esc(h.description || '—')}</div>
+        <div class="detail-meta">
+          ${h.vendor ? esc(h.vendor) : ''}
+          ${h.productNumber ? `· <span style="font-family:var(--mono)">${esc(h.productNumber)}</span>` : ''}
+          ${h.productUrl ? `· <a href="${esc(h.productUrl)}" target="_blank" rel="noopener">&#128279; Product link</a>` : ''}
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn" onclick="openEditForm('holder','${esc(holderId)}')">Edit</button>
+        <button class="hdr-btn" onclick="printLabel('${esc(holderId)}', 'holder')">&#127991; Print Label</button>
+      </div>
+    </div>
+    <div class="section-sep">Specifications</div>
+    <div class="spec-grid">
+      ${h.type ? `<div class="spec-item"><div class="spec-label">Type</div><div class="spec-value">${esc(h.type)}</div></div>` : ''}
+      ${h.taper ? `<div class="spec-item"><div class="spec-label">Taper</div><div class="spec-value">${esc(h.taper)}</div></div>` : ''}
+      ${h.boreCapacity ? `<div class="spec-item"><div class="spec-label">Bore/Capacity</div><div class="spec-value">${esc(h.boreCapacity)}</div></div>` : ''}
+    </div>
+    <div class="section-sep">Inventory</div>
+    <div class="inv-summary">
+      <span class="total">Qty on hand: ${qty}</span>
+      <span>Min qty: ${min}</span>
+      ${statusBadge(qty, min)}
+      ${h.lastPrice ? `<span>Last price: $${Number(h.lastPrice).toFixed(2)}</span>` : ''}
+      ${h.lastOrderDate ? `<span>Last order: ${esc(h.lastOrderDate)}</span>` : ''}
+    </div>
+    ${h.notes ? `<div class="section-sep">Notes</div><div class="notes-text">${esc(h.notes)}</div>` : ''}`;
+
+  document.getElementById('tool-detail-body').innerHTML = html;
+}
+
+// ── Add / Edit form ────────────────────────────────────────────────────────
+let formMode = { action: 'add', cat: 'tool', itemId: null };
+
+function openAddForm(cat, prefillProductNumber) {
+  formMode = { action: 'add', cat: cat || 'tool', itemId: null };
+  renderForm(null, prefillProductNumber || '');
+  showView('form');
+}
+
+function openEditForm(cat, itemId) {
+  formMode = { action: 'edit', cat, itemId };
+  renderForm(itemId, '');
+  showView('form');
+}
+
+function cancelForm() {
+  if (formMode.action === 'edit' && formMode.itemId) {
+    openDetail(formMode.itemId, formMode.cat);
+  } else {
+    showIndex();
+  }
+}
+
+function renderForm(itemId, prefillPn) {
+  const isEdit = formMode.action === 'edit';
+  const cat    = formMode.cat;
+
+  let item = null;
+  if (isEdit) {
+    if (cat === 'tool')   item = state.tools.find(t => t.toolId === itemId);
+    if (cat === 'insert') item = state.inserts.find(i => i.insertId === itemId);
+    if (cat === 'holder') item = state.holders.find(h => h.holderId === itemId);
+  }
+
+  const v = (field, fallback='') => item ? (item[field] || fallback) : fallback;
+
+  let html = `<div class="form-title">${isEdit ? 'Edit' : 'Add New'} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</div>`;
+
+  if (!isEdit) {
+    html += `<div class="cat-pick">
+      <button class="cat-btn ${cat==='tool'?'selected':''}" onclick="switchFormCat('tool')">Tool</button>
+      <button class="cat-btn ${cat==='insert'?'selected':''}" onclick="switchFormCat('insert')">Insert</button>
+      <button class="cat-btn ${cat==='holder'?'selected':''}" onclick="switchFormCat('holder')">Holder</button>
+      <button class="cat-btn ${cat==='accessory'?'selected':''}" onclick="switchFormCat('accessory')">Accessory</button>
+    </div>`;
+  }
+
+  // Common fields
+  html += `<div class="form-section">
+    <div class="form-section-label">Basic Info</div>
+    <div class="form-row">
+      <div class="form-field full">
+        <label>Description <span class="req">*</span></label>
+        <input type="text" id="f-description" value="${esc(v('description'))}" placeholder="e.g. 1/2&quot; 3-Flute Carbide End Mill">
+        <span class="field-error" id="err-description"></span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Vendor</label>
+        <input type="text" id="f-vendor" value="${esc(v('vendor'))}" placeholder="e.g. Accupro">
+      </div>
+      <div class="form-field">
+        <label>Product # <span class="req">*</span></label>
+        <input type="text" id="f-productNumber" value="${esc(item ? v('productNumber') : prefillPn)}" placeholder="Manufacturer part number">
+        <span class="field-error" id="err-productNumber"></span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field full">
+        <label>Product URL</label>
+        <input type="url" id="f-productUrl" value="${esc(v('productUrl'))}" placeholder="https://...">
+      </div>
+    </div>
+  </div>`;
+
+  if (cat === 'tool') {
+    const toolTypes = ['flat end mill','bull nose end mill','ball end mill','face mill','chamfer mill',
+      'drill','center drill','spot drill','boring bar','reamer','tap right hand','tap left hand',
+      'thread mill','form mill','dovetail mill','t-slot cutter','engraving cutter','taper mill','other'];
+    html += `<div class="form-section">
+      <div class="form-section-label">Tool Properties</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Type <span class="req">*</span></label>
+          <select id="f-type" onchange="updateConditionalFields()">
+            <option value="">Select type...</option>
+            ${toolTypes.map(t => `<option value="${t}" ${v('type')===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+          <span class="field-error" id="err-type"></span>
+        </div>
+        <div class="form-field">
+          <label>Tooling Type <span class="req">*</span></label>
+          <select id="f-toolingType">
+            <option value="solid" ${v('toolingType')==='solid'||!v('toolingType')?'selected':''}>Solid</option>
+            <option value="inserted" ${v('toolingType')==='inserted'?'selected':''}>Inserted</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Body Material</label>
+          <select id="f-bodyMaterial">
+            <option value="carbide"     ${v('bodyMaterial')==='carbide'?'selected':''}>Carbide</option>
+            <option value="hss"         ${v('bodyMaterial')==='hss'?'selected':''}>HSS</option>
+            <option value="ceramic"     ${v('bodyMaterial')==='ceramic'?'selected':''}>Ceramic</option>
+            <option value="unspecified" ${v('bodyMaterial')==='unspecified'||!v('bodyMaterial')?'selected':''}>Unspecified</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Diameter</label>
+          <input type="number" id="f-diameter" step="0.0001" value="${esc(v('diameter'))}" placeholder="0.500">
+        </div>
+        <div class="form-field" style="flex:0;min-width:80px">
+          <label>Unit</label>
+          <select id="f-diameterUnit">
+            <option value="in" ${v('diameterUnit','in')==='in'?'selected':''}>in</option>
+            <option value="mm" ${v('diameterUnit')==='mm'?'selected':''}>mm</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Flutes</label>
+          <input type="number" id="f-flutes" min="1" max="20" value="${esc(v('flutes'))}" placeholder="3">
+        </div>
+        <div class="form-field">
+          <label>OAL</label>
+          <input type="number" id="f-oal" step="0.001" value="${esc(v('oal'))}" placeholder="3.0">
+        </div>
+        <div class="form-field" style="flex:0;min-width:80px">
+          <label>Unit</label>
+          <select id="f-oalUnit">
+            <option value="in" ${v('oalUnit','in')==='in'?'selected':''}>in</option>
+            <option value="mm" ${v('oalUnit')==='mm'?'selected':''}>mm</option>
+          </select>
+        </div>
+      </div>
+      <div id="conditional-fields"><!-- populated by updateConditionalFields() --></div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-label">Inventory</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Stock Qty</label>
+          <input type="number" id="f-stockQty" min="0" value="${esc(v('stockQty','0'))}">
+        </div>
+        <div class="form-field">
+          <label>Min Qty</label>
+          <input type="number" id="f-minQty" min="0" value="${esc(v('minQty','0'))}">
+        </div>
+        <div class="form-field">
+          <label>Last Price ($)</label>
+          <input type="number" id="f-lastPrice" step="0.01" value="${esc(v('lastPrice'))}">
+        </div>
+        <div class="form-field">
+          <label>Last Order Date</label>
+          <input type="text" id="f-lastOrderDate" value="${esc(v('lastOrderDate'))}" placeholder="M/D/YY">
+        </div>
+      </div>
+    </div>`;
+
+    // Fusion GUID (hidden by default)
+    html += `<div class="form-section">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('fusion-fields')">&#9660; Advanced (Fusion GUID)</button>
+      <div class="collapsible-body" id="fusion-fields">
+        <div class="form-row">
+          <div class="form-field full">
+            <label>Fusion GUID</label>
+            <input type="text" id="f-fusionGuid" value="${esc(v('fusionGuid'))}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if (cat === 'insert') {
+    html += `<div class="form-section">
+      <div class="form-section-label">Insert Properties</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Insert Geometry <span class="req">*</span></label>
+          <input type="text" id="f-insertGeometry" value="${esc(v('insertGeometry'))}" placeholder="e.g. APMT, CCMT">
+          <span class="field-error" id="err-insertGeometry"></span>
+        </div>
+        <div class="form-field">
+          <label>Grade <span class="req">*</span></label>
+          <input type="text" id="f-grade" value="${esc(v('grade'))}" placeholder="e.g. IC908">
+          <span class="field-error" id="err-grade"></span>
+        </div>
+        <div class="form-field">
+          <label>Material Application <span class="req">*</span></label>
+          <select id="f-materialApplication">
+            <option value="">Select...</option>
+            <option value="steel"     ${v('materialApplication')==='steel'?'selected':''}>Steel</option>
+            <option value="aluminum"  ${v('materialApplication')==='aluminum'?'selected':''}>Aluminum</option>
+            <option value="stainless" ${v('materialApplication')==='stainless'?'selected':''}>Stainless</option>
+            <option value="universal" ${v('materialApplication')==='universal'?'selected':''}>Universal</option>
+          </select>
+          <span class="field-error" id="err-materialApplication"></span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Nose Radius</label>
+          <input type="number" id="f-noseRadius" step="0.001" value="${esc(v('noseRadius'))}" placeholder="0.016">
+        </div>
+        <div class="form-field">
+          <label>IC Size</label>
+          <input type="text" id="f-icSize" value="${esc(v('icSize'))}" placeholder="e.g. 1/4&quot;">
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-label">Inventory</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Qty On Hand</label>
+          <input type="number" id="f-qtyOnHand" min="0" value="${esc(v('qtyOnHand','0'))}">
+        </div>
+        <div class="form-field">
+          <label>Min Qty</label>
+          <input type="number" id="f-minQty" min="0" value="${esc(v('minQty','0'))}">
+        </div>
+        <div class="form-field">
+          <label>Last Price ($)</label>
+          <input type="number" id="f-lastPrice" step="0.01" value="${esc(v('lastPrice'))}">
+        </div>
+        <div class="form-field">
+          <label>Last Order Date</label>
+          <input type="text" id="f-lastOrderDate" value="${esc(v('lastOrderDate'))}" placeholder="M/D/YY">
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if (cat === 'holder') {
+    html += `<div class="form-section">
+      <div class="form-section-label">Holder Properties</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Type</label>
+          <select id="f-holderType">
+            <option value="">Select...</option>
+            ${['ER collet chuck','milling chuck','drill chuck','shrink fit','hydraulic','other']
+              .map(t => `<option value="${t}" ${v('type')===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Taper</label>
+          <select id="f-taper">
+            <option value="">Select...</option>
+            ${['CAT40','BT40','HSK','R8','other']
+              .map(t => `<option value="${t}" ${v('taper')===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Bore/Capacity</label>
+          <input type="text" id="f-boreCapacity" value="${esc(v('boreCapacity'))}" placeholder="e.g. 1/2&quot; ER32">
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-label">Inventory</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Qty On Hand</label>
+          <input type="number" id="f-qtyOnHand" min="0" value="${esc(v('qtyOnHand','0'))}">
+        </div>
+        <div class="form-field">
+          <label>Min Qty</label>
+          <input type="number" id="f-minQty" min="0" value="${esc(v('minQty','0'))}">
+        </div>
+        <div class="form-field">
+          <label>Last Price ($)</label>
+          <input type="number" id="f-lastPrice" step="0.01" value="${esc(v('lastPrice'))}">
+        </div>
+        <div class="form-field">
+          <label>Last Order Date</label>
+          <input type="text" id="f-lastOrderDate" value="${esc(v('lastOrderDate'))}" placeholder="M/D/YY">
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if (cat === 'accessory') {
+    html += `<div class="form-section">
+      <div class="form-section-label">Accessory Properties</div>
+      <div class="form-row">
+        <div class="form-field full">
+          <label>Tool ID <span class="req">*</span></label>
+          <input type="text" id="f-toolId" value="" placeholder="TL-001" list="tool-id-list">
+          <datalist id="tool-id-list">
+            ${state.tools.map(t => `<option value="${esc(t.toolId)}">${esc(t.description)}</option>`).join('')}
+          </datalist>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Type</label>
+          <select id="f-accType">
+            <option value="insert screw">Insert Screw</option>
+            <option value="shim">Shim</option>
+            <option value="clamp">Clamp</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Thread Size</label>
+          <input type="text" id="f-threadSize" placeholder="e.g. M2.5">
+        </div>
+        <div class="form-field">
+          <label>Drive Type</label>
+          <input type="text" id="f-driveType" placeholder="e.g. T15 Torx">
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Notes (all types)
+  html += `<div class="form-section">
+    <div class="form-row">
+      <div class="form-field full">
+        <label>Notes</label>
+        <textarea id="f-notes">${esc(v('notes'))}</textarea>
+      </div>
+    </div>
+  </div>
+  <div class="form-footer">
+    <button class="btn primary" onclick="submitForm()">&#10003; Save</button>
+    <button class="btn" onclick="cancelForm()">Cancel</button>
+  </div>`;
+
+  document.getElementById('form-body').innerHTML = html;
+
+  // Trigger conditional fields for tool type
+  if (cat === 'tool') updateConditionalFields();
+}
+
+function switchFormCat(cat) {
+  formMode.cat = cat;
+  renderForm(null, document.getElementById('f-productNumber')?.value || '');
+}
+
+function toggleCollapsible(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function updateConditionalFields() {
+  const type = (document.getElementById('f-type')?.value || '').toLowerCase();
+  const container = document.getElementById('conditional-fields');
+  if (!container) return;
+
+  let html = '<div class="form-row">';
+  const item = formMode.action === 'edit' ? (state.tools.find(t => t.toolId === formMode.itemId) || {}) : {};
+
+  if (['flat end mill','bull nose end mill','ball end mill','chamfer mill','drill','center drill','spot drill'].includes(type)) {
+    html += `<div class="form-field"><label>Corner Radius</label><input type="number" id="f-cornerRadius" step="0.0001" value="${esc(item.cornerRadius||'')}" placeholder="0.030"></div>`;
+    html += `<div class="form-field"><label>Tip Angle (°)</label><input type="number" id="f-tipAngle" step="0.1" value="${esc(item.tipAngle||'')}" placeholder="118"></div>`;
+  }
+  if (['chamfer mill','taper mill','dovetail mill'].includes(type)) {
+    html += `<div class="form-field"><label>Taper Angle (°)</label><input type="number" id="f-taperAngle" step="0.1" value="${esc(item.taperAngle||'')}"></div>`;
+  }
+  if (['tap right hand','tap left hand','thread mill'].includes(type)) {
+    html += `<div class="form-field"><label>Thread Pitch</label><input type="text" id="f-threadPitch" value="${esc(item.threadPitch||'')}" placeholder="e.g. 1.0mm or 32 TPI"></div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function gf(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+async function submitForm() {
+  const cat = formMode.cat;
+  const isEdit = formMode.action === 'edit';
+
+  // Validation
+  let valid = true;
+  function require(fieldId, errId) {
+    const val = gf(fieldId);
+    const errEl = document.getElementById(errId);
+    if (!val) {
+      if (errEl) errEl.textContent = 'Required';
+      document.getElementById(fieldId)?.classList.add('error');
+      valid = false;
+    } else {
+      if (errEl) errEl.textContent = '';
+      document.getElementById(fieldId)?.classList.remove('error');
+    }
+  }
+
+  require('f-description', 'err-description');
+  require('f-productNumber', 'err-productNumber');
+  if (cat === 'tool') require('f-type', 'err-type');
+  if (cat === 'insert') { require('f-insertGeometry','err-insertGeometry'); require('f-grade','err-grade'); require('f-materialApplication','err-materialApplication'); }
+  if (!valid) return;
+
+  let params = {};
+  if (cat === 'tool') {
+    params = {
+      action:        isEdit ? 'updateTool' : 'addTool',
+      toolId:        formMode.itemId || '',
+      type:          gf('f-type'),
+      toolingType:   gf('f-toolingType'),
+      bodyMaterial:  gf('f-bodyMaterial'),
+      description:   gf('f-description'),
+      vendor:        gf('f-vendor'),
+      productNumber: gf('f-productNumber'),
+      productUrl:    gf('f-productUrl'),
+      diameter:      gf('f-diameter'),
+      diameterUnit:  gf('f-diameterUnit'),
+      flutes:        gf('f-flutes'),
+      oal:           gf('f-oal'),
+      oalUnit:       gf('f-oalUnit'),
+      cornerRadius:  gf('f-cornerRadius') || '',
+      tipAngle:      gf('f-tipAngle') || '',
+      taperAngle:    gf('f-taperAngle') || '',
+      threadPitch:   gf('f-threadPitch') || '',
+      stockQty:      gf('f-stockQty') || 0,
+      minQty:        gf('f-minQty') || 0,
+      lastPrice:     gf('f-lastPrice'),
+      lastOrderDate: gf('f-lastOrderDate'),
+      fusionGuid:    gf('f-fusionGuid') || '',
+      notes:         gf('f-notes')
+    };
+  } else if (cat === 'insert') {
+    params = {
+      action:              isEdit ? 'updateInsert' : 'addInsert',
+      insertId:            formMode.itemId || '',
+      description:         gf('f-description'),
+      vendor:              gf('f-vendor'),
+      productNumber:       gf('f-productNumber'),
+      productUrl:          gf('f-productUrl'),
+      insertGeometry:      gf('f-insertGeometry'),
+      grade:               gf('f-grade'),
+      materialApplication: gf('f-materialApplication'),
+      noseRadius:          gf('f-noseRadius'),
+      icSize:              gf('f-icSize'),
+      qtyOnHand:           gf('f-qtyOnHand') || 0,
+      minQty:              gf('f-minQty') || 0,
+      lastPrice:           gf('f-lastPrice'),
+      lastOrderDate:       gf('f-lastOrderDate'),
+      notes:               gf('f-notes')
+    };
+  } else if (cat === 'holder') {
+    params = {
+      action:        isEdit ? 'updateHolder' : 'addHolder',
+      holderId:      formMode.itemId || '',
+      description:   gf('f-description'),
+      vendor:        gf('f-vendor'),
+      productNumber: gf('f-productNumber'),
+      productUrl:    gf('f-productUrl'),
+      type:          gf('f-holderType'),
+      taper:         gf('f-taper'),
+      boreCapacity:  gf('f-boreCapacity'),
+      qtyOnHand:     gf('f-qtyOnHand') || 0,
+      minQty:        gf('f-minQty') || 0,
+      lastPrice:     gf('f-lastPrice'),
+      lastOrderDate: gf('f-lastOrderDate'),
+      notes:         gf('f-notes')
+    };
+  } else if (cat === 'accessory') {
+    params = {
+      action:        'addAccessory',
+      toolId:        gf('f-toolId'),
+      type:          gf('f-accType'),
+      description:   gf('f-description'),
+      vendor:        gf('f-vendor'),
+      productNumber: gf('f-productNumber'),
+      threadSize:    gf('f-threadSize'),
+      driveType:     gf('f-driveType'),
+      notes:         gf('f-notes')
+    };
+  }
+
+  try {
+    const saveBtn = document.querySelector('#view-form .btn.primary');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+    const r = await callScript(params);
+    if (r.success) {
+      // Update local state
+      const newId = r.toolId || r.insertId || r.holderId || r.accessoryId || formMode.itemId;
+      await loadData(); // Reload to get fresh data
+      openDetail(newId, cat === 'accessory' ? 'tool' : cat);
+    } else {
+      alert('Error: ' + (r.error || 'Unknown error'));
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '✓ Save'; }
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ── Camera scan ────────────────────────────────────────────────────────────
+async function startCameraScan(inputElementId) {
+  if (!window.ZXing) { alert('ZXing library not loaded.'); return; }
+  const wrap = document.getElementById('video-wrap');
+  if (wrap) wrap.style.display = 'block';
+  const codeReader = new ZXing.BrowserMultiFormatReader();
+  try {
+    const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'video-preview');
+    const input = document.getElementById(inputElementId);
+    if (input) {
+      input.value = result.text;
+      state.lastScanned = result.text;
+      applyFilters();
+    }
+    codeReader.reset();
+  } catch (err) {
+    console.error('Scan error:', err);
+  } finally {
+    if (wrap) wrap.style.display = 'none';
+  }
+}
+
+// Search on Enter (barcode scanner)
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('main-search');
+  if (searchInput) {
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        state.lastScanned = searchInput.value.trim();
+        applyFilters();
+        // If exactly one result, go to detail
+        if (state.filtered.length === 1) {
+          openDetail(state.filtered[0]._id, state.filtered[0]._cat);
+        }
+      }
+    });
+    searchInput.addEventListener('input', () => {
+      state.lastScanned = '';
+      applyFilters();
+    });
+  }
+});
+
+// ── Print label stub ───────────────────────────────────────────────────────
+function printLabel(itemId, itemType) {
+  // Print module coming soon
+  // This function will generate a Code 128 barcode label
+  // and send to the configured label printer
+  alert('Print label feature coming soon.\nItem: ' + itemId);
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadData().then(() => {
+  // Support deep-link: tools.html#TL-006 → open detail directly
+  const hash = location.hash.replace('#', '').trim();
+  if (hash) {
+    const tool   = state.tools.find(t => t.toolId === hash);
+    const insert = state.inserts.find(i => i.insertId === hash);
+    const holder = state.holders.find(h => h.holderId === hash);
+    if (tool)   openDetail(hash, 'tool');
+    else if (insert) openDetail(hash, 'insert');
+    else if (holder) openDetail(hash, 'holder');
+  }
+});
+</script>
+</body>
+</html>
