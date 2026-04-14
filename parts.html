@@ -66,16 +66,8 @@
     flex-wrap: wrap;
   }
 
-  .logo {
-    font-family: var(--mono);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .logo span { color: var(--text2); font-weight: 400; }
+  .logo-wrap { display: flex; align-items: center; }
+  .header-logo { height: 36px; width: auto; }
 
   .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -490,15 +482,57 @@
     .results-grid { grid-template-columns: 1fr; }
     .summary-stats { grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* ── Tools section in part detail ── */
+  .tools-section { margin-top: 12px; }
+  .tools-section-sep { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 0 10px; border-top: 1px solid var(--border); margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .tools-section-sep-btns { display: flex; gap: 8px; }
+  .ts-btn { font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; transition: all 0.12s; display: inline-flex; align-items: center; gap: 4px; }
+  .ts-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .tool-link-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg3); border-radius: 6px; border: 1px solid var(--border); margin-bottom: 6px; cursor: pointer; transition: border-color 0.12s; }
+  .tool-link-item:hover { border-color: var(--accent); }
+  .tli-id { font-family: var(--mono); font-size: 11px; color: var(--accent); white-space: nowrap; }
+  .tli-desc { font-size: 13px; flex: 1; }
+  .tli-meta { font-family: var(--mono); font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .tli-remove { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border2); color: var(--text3); background: transparent; cursor: pointer; transition: all 0.12s; }
+  .tli-remove:hover { border-color: var(--red); color: var(--red); }
+  .inline-search-panel { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 12px; margin-top: 8px; display: none; }
+  .inline-search-panel input { width: 100%; font-family: var(--mono); font-size: 12px; background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; }
+  .inline-search-panel input:focus { outline: none; border-color: var(--accent); }
+  .inline-results-list { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .inline-result-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--bg2); border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.12s; }
+  .inline-result-row:hover { border-color: var(--accent); }
+  .ir-id { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+  .ir-desc { font-size: 12px; flex: 1; }
+  .ir-vendor { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  /* Setup sheet import */
+  .setup-import-panel { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 14px; margin-top: 8px; display: none; }
+  .setup-import-panel label { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 6px; }
+  .setup-import-panel input[type=file] { font-family: var(--mono); font-size: 11px; color: var(--text2); background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; width: 100%; cursor: pointer; margin-bottom: 10px; }
+  .confirm-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+  .confirm-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border2); }
+  .confirm-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .match-ok { font-family: var(--mono); font-size: 10px; color: var(--green); }
+  .match-miss { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  .confirm-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .confirm-btn { font-family: var(--mono); font-size: 11px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; transition: all 0.12s; }
+  .confirm-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .confirm-btn.primary:hover { background: var(--accent2); }
+  .confirm-btn:hover { border-color: var(--accent); color: var(--text); }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo">BIC <span>/ Parts</span></div>
+  <div class="logo-wrap">
+    <img src="Bell_Logo.png" alt="Bell Intercoolers" class="header-logo">
+  </div>
   <div class="header-right">
     <a href="dashboard.html" class="hdr-btn">&#8592; Dashboard</a>
-    <a href="index.html" class="hdr-btn primary">+ New PO</a>
+    <a href="parts.html"     class="hdr-btn active">Parts</a>
+    <a href="tools.html"     class="hdr-btn">Tools</a>
+    <a href="reorder.html"   class="hdr-btn">Reorder</a>
+    <a href="index.html"     class="hdr-btn primary">+ New PO</a>
   </div>
 </div>
 
@@ -542,11 +576,21 @@ function getConfig() {
   catch { return {}; }
 }
 
-// Apply theme on load
-window.addEventListener('load', () => {
+// Apply theme immediately (before load to avoid flash)
+(function() {
   const theme = localStorage.getItem(THEME_KEY) || 'dark';
   document.body.classList.toggle('light', theme === 'light');
+  // Pre-seed script URL if not set
+  const DEFAULT_SCRIPT = 'https://script.google.com/macros/s/AKfycbwPhuL9gsYgewRQCRcbyguqw3ogJUOXniqi9C_voFQZQlK_76LNXWyBLgkcCCs-yk3Feg/exec';
+  try {
+    const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    if (!cfg.script) { cfg.script = DEFAULT_SCRIPT; localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+  } catch(e) {}
+})();
+
+window.addEventListener('load', () => {
   loadData();
+  loadToolingData();
 });
 
 // ── LOAD DATA ─────────────────────────────────────────────────────────────────
@@ -867,7 +911,14 @@ function showPartDetail(partNumber) {
         </thead>
         <tbody>${rows}</tbody>
       </table>
+    </div>
+
+    <div class="tools-section" id="tools-section-${esc(partNumber)}">
+      ${renderPartToolsSection(partNumber)}
     </div>`;
+
+  // Attach file input listener after render
+  setTimeout(() => attachSetupFileListener(partNumber), 0);
 }
 
 // ── MATERIAL DETAIL ───────────────────────────────────────────────────────────
@@ -960,6 +1011,322 @@ function showMaterialDetail(matPN) {
 function showIndex() {
   document.getElementById('view-detail').style.display = 'none';
   document.getElementById('view-index').style.display = 'block';
+}
+
+// ── TOOLING DATA ──────────────────────────────────────────────────────────────
+const toolingState = { tools: [], inserts: [], holders: [], toolPartLinks: [], loaded: false };
+
+async function loadToolingData() {
+  const cfg = getConfig();
+  if (!cfg.script) return;
+  try {
+    const resp = await fetch(cfg.script + '?action=getToolingData&t=' + Date.now());
+    const data = await resp.json();
+    if (data.success) {
+      toolingState.tools         = data.tools         || [];
+      toolingState.inserts       = data.inserts        || [];
+      toolingState.holders       = data.holders        || [];
+      toolingState.toolPartLinks = data.toolPartLinks  || [];
+      toolingState.loaded        = true;
+    }
+  } catch(e) { /* silently fail — tools section will show empty */ }
+}
+
+async function callScript(params) {
+  const cfg = getConfig();
+  if (!cfg.script) throw new Error('No Apps Script URL configured.');
+  const qs = Object.entries(params).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+  const resp = await fetch(cfg.script + '?' + qs);
+  return resp.json();
+}
+
+function renderPartToolsSection(partNumber) {
+  const links = toolingState.toolPartLinks.filter(l => String(l.partNumber).trim() === String(partNumber).trim());
+
+  let html = `<div class="tools-section-sep">
+    <span>Tools Used on This Part</span>
+    <div class="tools-section-sep-btns">
+      <button class="ts-btn" onclick="toggleToolLinkPanel('${esc(partNumber)}')">+ Link Tools</button>
+      <button class="ts-btn" onclick="toggleSetupImportPanel('${esc(partNumber)}')">&#128196; Import Setup Sheet</button>
+    </div>
+  </div>`;
+
+  if (links.length === 0) {
+    html += `<div style="font-family:var(--mono);font-size:12px;color:var(--text3);padding:8px 0">No tools linked yet.</div>`;
+  } else {
+    links.forEach(link => {
+      const tool = toolingState.tools.find(t => t.toolId === link.toolId);
+      const desc  = tool ? (tool.description || tool.toolId) : link.toolId;
+      const vendor = tool ? (tool.vendor || '') : '';
+      html += `<div class="tool-link-item" onclick="window.location='tools.html#${esc(link.toolId)}'">
+        <span class="tli-id">${esc(link.toolId)}</span>
+        <span class="tli-desc">${esc(desc)}</span>
+        ${vendor ? `<span class="tli-meta">${esc(vendor)}</span>` : ''}
+        ${link.fusionTNum ? `<span class="tli-meta">${esc(link.fusionTNum)}</span>` : ''}
+        <button class="tli-remove" onclick="event.stopPropagation();removeToolLink('${esc(link.linkId)}','${esc(partNumber)}')">✕</button>
+      </div>`;
+    });
+  }
+
+  // Link tools panel
+  html += `<div class="inline-search-panel" id="tool-link-panel-${esc(partNumber)}">
+    <input type="search" placeholder="Search tool ID, description, product #..." autocomplete="off"
+      oninput="searchToolsForPart(this.value,'${esc(partNumber)}')">
+    <div class="inline-results-list" id="tool-link-results-${esc(partNumber)}"></div>
+  </div>`;
+
+  // Setup sheet import panel
+  html += `<div class="setup-import-panel" id="setup-import-panel-${esc(partNumber)}">
+    <label>Select Fusion Setup Sheet (.html)</label>
+    <input type="file" accept=".html,.htm" id="setup-file-${esc(partNumber)}">
+    <div id="setup-confirm-${esc(partNumber)}"></div>
+  </div>`;
+
+  return html;
+}
+
+function toggleToolLinkPanel(partNumber) {
+  const el = document.getElementById('tool-link-panel-' + partNumber);
+  if (!el) return;
+  const open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  if (!open) {
+    const inp = el.querySelector('input');
+    if (inp) { inp.value = ''; inp.focus(); }
+    searchToolsForPart('', partNumber);
+  }
+}
+
+function searchToolsForPart(query, partNumber) {
+  const container = document.getElementById('tool-link-results-' + partNumber);
+  if (!container) return;
+  const q = (query || '').toLowerCase().trim();
+  const items = q
+    ? toolingState.tools.filter(t =>
+        String(t.toolId).toLowerCase().includes(q) ||
+        String(t.description).toLowerCase().includes(q) ||
+        String(t.productNumber).toLowerCase().includes(q) ||
+        String(t.vendor).toLowerCase().includes(q)
+      )
+    : toolingState.tools.slice(0, 20);
+
+  container.innerHTML = items.map(t => `
+    <div class="inline-result-row" onclick="addToolPartLink('${esc(t.toolId)}','${esc(partNumber)}')">
+      <span class="ir-id">${esc(t.toolId)}</span>
+      <span class="ir-desc">${esc(t.description || '—')}</span>
+      <span class="ir-vendor">${esc(t.vendor || '')}</span>
+    </div>`).join('') || `<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:8px">No tools found.</div>`;
+}
+
+async function addToolPartLink(toolId, partNumber) {
+  try {
+    const r = await callScript({ action: 'addToolPartLink', toolId, partNumber, fusionTNum: '', source: 'manual' });
+    if (r.success) {
+      toolingState.toolPartLinks.push({ linkId: r.linkId, partNumber, toolId, fusionTNum: '', source: 'manual', fusionFile: '', notes: '' });
+      refreshToolsSection(partNumber);
+    } else {
+      alert(r.error || 'Failed to link tool.');
+    }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function removeToolLink(linkId, partNumber) {
+  if (!confirm('Remove this tool link?')) return;
+  try {
+    const r = await callScript({ action: 'removeToolPartLink', linkId });
+    if (r.success) {
+      const idx = toolingState.toolPartLinks.findIndex(l => l.linkId === linkId);
+      if (idx >= 0) toolingState.toolPartLinks.splice(idx, 1);
+      refreshToolsSection(partNumber);
+    }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function refreshToolsSection(partNumber) {
+  const sec = document.getElementById('tools-section-' + partNumber);
+  if (!sec) return;
+  sec.innerHTML = renderPartToolsSection(partNumber);
+  setTimeout(() => attachSetupFileListener(partNumber), 0);
+}
+
+// ── SETUP SHEET IMPORT ────────────────────────────────────────────────────────
+function toggleSetupImportPanel(partNumber) {
+  const el = document.getElementById('setup-import-panel-' + partNumber);
+  if (!el) return;
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+function attachSetupFileListener(partNumber) {
+  const input = document.getElementById('setup-file-' + partNumber);
+  if (!input) return;
+  input.addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+    const text = await file.text();
+    const tools = parseSetupSheet(text);
+    renderSetupConfirm(tools, file.name, partNumber);
+  });
+}
+
+function parseSetupSheet(htmlContent) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, 'text/html');
+  const text = doc.body ? doc.body.innerText : htmlContent;
+
+  const toolPattern = /T(\d+)\s+D[\d.]+\s+L[\d.]+\s+Type:\s*(.*?)\s+Diameter:\s*([\d.]+)in.*?Description:\s*(.*?)(?:\s+Vendor:\s*(.*?))?(?:\s+Product:\s*(.*?))?(?=T\d+\s+D[\d.]|$)/gs;
+
+  const tools = [];
+  const seen = new Set();
+  let match;
+
+  while ((match = toolPattern.exec(text)) !== null) {
+    const tNum = match[1];
+    if (seen.has(tNum)) continue;
+    seen.add(tNum);
+    tools.push({
+      fusionTNumber: 'T' + tNum,
+      type:          (match[2] || '').trim(),
+      diameter:      (match[3] || '').trim(),
+      description:   (match[4] || '').trim(),
+      vendor:        (match[5] || '').trim(),
+      productId:     (match[6] || '').trim()
+    });
+  }
+
+  // Fallback: scan for T## patterns in table rows
+  if (tools.length === 0) {
+    const rows = doc.querySelectorAll('tr');
+    rows.forEach(row => {
+      const cells = [...row.querySelectorAll('td,th')].map(c => c.innerText.trim());
+      if (cells.length >= 2 && /^T\d+$/.test(cells[0])) {
+        const tNum = cells[0].replace('T','');
+        if (!seen.has(tNum)) {
+          seen.add(tNum);
+          tools.push({
+            fusionTNumber: 'T' + tNum,
+            type:          cells[1] || '',
+            diameter:      cells[2] || '',
+            description:   cells[3] || cells[1] || '',
+            vendor:        cells[4] || '',
+            productId:     cells[5] || ''
+          });
+        }
+      }
+    });
+  }
+
+  return tools;
+}
+
+function matchTool(parsed) {
+  // Try product ID match first, then description fuzzy match
+  if (parsed.productId) {
+    const byPN = toolingState.tools.find(t =>
+      String(t.productNumber).toLowerCase() === parsed.productId.toLowerCase()
+    );
+    if (byPN) return { tool: byPN, confidence: 'Product # match' };
+  }
+  if (parsed.description) {
+    const desc = parsed.description.toLowerCase();
+    const byDesc = toolingState.tools.find(t =>
+      t.description && t.description.toLowerCase().includes(desc.slice(0, 12))
+    );
+    if (byDesc) return { tool: byDesc, confidence: 'Description match' };
+  }
+  return null;
+}
+
+function renderSetupConfirm(parsedTools, filename, partNumber) {
+  const container = document.getElementById('setup-confirm-' + partNumber);
+  if (!container) return;
+
+  if (parsedTools.length === 0) {
+    container.innerHTML = `<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:8px 0">No tools found in this file. Expected Fusion 360 setup sheet format.</div>`;
+    return;
+  }
+
+  const rows = parsedTools.map((parsed, idx) => {
+    const match = matchTool(parsed);
+    const checkedAttr = match ? 'checked' : '';
+    const matchCell = match
+      ? `<span class="match-ok">✓ ${esc(match.confidence)}<br><small>${esc(match.tool.toolId)} — ${esc(match.tool.description)}</small></span>`
+      : `<span class="match-miss">✗ Not found in system</span>`;
+
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent)">${esc(parsed.fusionTNumber)}</td>
+      <td>${esc(parsed.description || parsed.type)}</td>
+      <td>${matchCell}</td>
+      <td style="text-align:center"><input type="checkbox" data-idx="${idx}" ${checkedAttr} ${match?'':'disabled'}></td>
+    </tr>`;
+  });
+
+  const tableHTML = `
+    <table class="confirm-table">
+      <thead>
+        <tr>
+          <th>Fusion T#</th>
+          <th>Description</th>
+          <th>Match</th>
+          <th style="text-align:center">Include?</th>
+        </tr>
+      </thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>
+    <div class="confirm-btns">
+      <button class="confirm-btn primary" onclick="confirmSetupImport('${esc(partNumber)}','${esc(filename)}')">&#10003; Import Checked</button>
+      <button class="confirm-btn" onclick="document.getElementById('setup-confirm-${esc(partNumber)}').innerHTML=''">Cancel</button>
+    </div>`;
+
+  container.innerHTML = tableHTML;
+  // Store parsed tools on container for access during confirm
+  container._parsedTools = parsedTools;
+}
+
+async function confirmSetupImport(partNumber, filename) {
+  const container = document.getElementById('setup-confirm-' + partNumber);
+  if (!container || !container._parsedTools) return;
+  const parsedTools = container._parsedTools;
+
+  const checkboxes = container.querySelectorAll('input[type=checkbox]:checked');
+  const toImport = [];
+  checkboxes.forEach(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    const parsed = parsedTools[idx];
+    const match = matchTool(parsed);
+    if (match) {
+      toImport.push({ tool: match.tool, fusionTNum: parsed.fusionTNumber });
+    }
+  });
+
+  if (toImport.length === 0) { alert('No tools selected.'); return; }
+
+  let ok = 0;
+  for (const item of toImport) {
+    try {
+      const r = await callScript({
+        action: 'addToolPartLink',
+        toolId: item.tool.toolId,
+        partNumber,
+        fusionTNum: item.fusionTNum,
+        source: 'setup sheet',
+        fusionFile: filename
+      });
+      if (r.success) {
+        ok++;
+        toolingState.toolPartLinks.push({
+          linkId: r.linkId, partNumber,
+          toolId: item.tool.toolId,
+          fusionTNum: item.fusionTNum,
+          source: 'setup sheet',
+          fusionFile: filename,
+          notes: ''
+        });
+      }
+    } catch(e) { /* skip */ }
+  }
+
+  alert(`Imported ${ok} tool link${ok !== 1 ? 's' : ''} from setup sheet.`);
+  refreshToolsSection(partNumber);
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────

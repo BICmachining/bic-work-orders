@@ -231,6 +231,28 @@
   .collapsible-body { display: none; margin-top: 10px; }
   .collapsible-body.open { display: block; }
 
+  /* ── FAB ── */
+  .fab {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--accent); border: none; color: #fff;
+    font-size: 26px; line-height: 1; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(74,158,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.15s;
+    z-index: 90;
+  }
+  .fab:hover { background: var(--accent2); transform: scale(1.08); }
+  .fab-tooltip {
+    position: fixed; bottom: 28px; right: 84px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--text); font-family: var(--mono); font-size: 11px;
+    padding: 5px 10px; border-radius: 4px; white-space: nowrap;
+    pointer-events: none; opacity: 0; transition: opacity 0.15s;
+    z-index: 90;
+  }
+  .fab:hover + .fab-tooltip { opacity: 1; }
+
   /* ── Responsive ── */
   @media (max-width: 640px) {
     .results-table-wrap { display: none; }
@@ -250,15 +272,16 @@
 <!-- ── Header ─────────────────────────────────────────────────────────────── -->
 <div class="header">
   <div class="logo-wrap">
-    <img src="Bell_Logo.jpg" alt="Bell Intercoolers" class="header-logo">
+    <img src="Bell_Logo.png" alt="Bell Intercoolers" class="header-logo">
   </div>
   <div class="header-right">
     <a href="dashboard.html" class="hdr-btn">Dashboard</a>
     <a href="parts.html" class="hdr-btn">Parts</a>
     <a href="tools.html" class="hdr-btn active">Tools</a>
     <a href="reorder.html" class="hdr-btn">Reorder</a>
+    <button class="hdr-btn primary" onclick="openAddForm('tool','')">+ Add Tool</button>
     <button class="hdr-btn" onclick="openSettings()">&#9881; Settings</button>
-    <a href="index.html" class="hdr-btn primary">+ New PO</a>
+    <a href="index.html" class="hdr-btn">+ New PO</a>
   </div>
 </div>
 
@@ -293,7 +316,7 @@
 <!-- ── View: Index ────────────────────────────────────────────────────────── -->
 <div id="view-index" style="display:none">
   <div class="index-hero">
-    <img src="Bell_Logo.jpg" alt="Bell Intercoolers" class="hero-logo">
+    <img src="Bell_Logo.png" alt="Bell Intercoolers" class="hero-logo">
     <div class="hero-tagline">High Performance Heat Exchangers</div>
   </div>
   <div class="search-wrap">
@@ -394,6 +417,10 @@
   </div>
   <div class="form-body" id="form-body"></div>
 </div>
+
+<!-- ── FAB: Add Tool ─────────────────────────────────────────────────────── -->
+<button class="fab" id="fab-add" onclick="openAddForm('tool','')" title="Add Tool">+</button>
+<div class="fab-tooltip">Add Tool</div>
 
 <!-- ── Loading / error states ────────────────────────────────────────────── -->
 <div id="view-loading" class="loading">
@@ -520,6 +547,9 @@ function showView(name) {
   });
   const target = document.getElementById('view-' + name);
   if (target) target.style.display = 'block';
+  // Hide FAB when in form or loading views
+  const fab = document.getElementById('fab-add');
+  if (fab) fab.style.display = ['form','loading','error'].includes(name) ? 'none' : 'flex';
 }
 
 function showIndex() {
