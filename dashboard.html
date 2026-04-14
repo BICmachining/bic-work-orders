@@ -448,6 +448,10 @@
   .chevron { font-size: 11px; color: var(--text3); transition: transform 0.2s; }
   .po-card.expanded .chevron { transform: rotate(180deg); }
 
+  .btn-delete-po { background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 2px 4px; border-radius: 4px; opacity: 0; transition: opacity 0.15s, color 0.15s; line-height: 1; }
+  .po-card-header:hover .btn-delete-po { opacity: 1; }
+  .btn-delete-po:hover { color: var(--red) !important; opacity: 1; }
+
   /* NOTES CALLOUT */
   .po-notes {
     margin: 12px 18px 0;
@@ -1037,6 +1041,7 @@ function renderDashboard() {
           <div class="po-card-right">
             ${dueBadge}
             <div class="po-progress">${dots}</div>
+            <button class="btn-delete-po" onclick="deletePO(event,'${esc(po.poNumber)}')" title="Delete PO">&#128465;</button>
             <span class="chevron">&#9660;</span>
           </div>
         </div>
@@ -1070,6 +1075,37 @@ function renderDashboard() {
 function toggleCard(poNum) {
   const card = document.getElementById('po-' + poNum);
   if (card) card.classList.toggle('expanded');
+}
+
+// ── DELETE PO ─────────────────────────────────────────────────────────────────
+async function deletePO(event, poNumber) {
+  event.stopPropagation(); // don't toggle the card open
+  if (!confirm(`Delete PO #${poNumber} and all its line items?\n\nThis cannot be undone.`)) return;
+
+  const cfg = getConfig();
+  if (!cfg.script) return;
+
+  const btn = event.target;
+  btn.textContent = '⏳';
+  btn.disabled = true;
+
+  try {
+    const url = cfg.script + '?action=deletePO&poNumber=' + encodeURIComponent(poNumber);
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if (!result.success) throw new Error(result.error);
+
+    // Remove from local data and re-render — no need to reload from server
+    allPOs   = allPOs.filter(p => String(p.poNumber) !== String(poNumber));
+    allLines = allLines.filter(l => String(l.poNumber) !== String(poNumber));
+    renderStats();
+    renderDashboard();
+    renderTrends();
+  } catch (err) {
+    alert('Failed to delete PO: ' + err.message);
+    btn.textContent = '🗑️';
+    btn.disabled = false;
+  }
 }
 
 // ── STATUS UPDATE ─────────────────────────────────────────────────────────────
