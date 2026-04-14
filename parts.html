@@ -1164,56 +1164,101 @@ function attachSetupFileListener(partNumber) {
     if (!file) return;
     const text = await file.text();
     const tools = parseSetupSheet(text);
-    renderSetupConfirm(tools, file.name, partNumber);
+    renderSetupConfirm(tools, file.name, partNumber, text);
   });
 }
 
 function parseSetupSheet(htmlContent) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlContent, 'text/html');
-  const text = doc.body ? doc.body.innerText : htmlContent;
-
-  const toolPattern = /T(\d+)\s+D[\d.]+\s+L[\d.]+\s+Type:\s*(.*?)\s+Diameter:\s*([\d.]+)in.*?Description:\s*(.*?)(?:\s+Vendor:\s*(.*?))?(?:\s+Product:\s*(.*?))?(?=T\d+\s+D[\d.]|$)/gs;
-
   const tools = [];
   const seen = new Set();
-  let match;
 
-  while ((match = toolPattern.exec(text)) !== null) {
-    const tNum = match[1];
-    if (seen.has(tNum)) continue;
+  // ── Strategy 1: Fusion 360 HTML setup sheet table rows ───────────────────
+  // Fusion outputs a table where each tool row has cells like:
+  //   T1 | tool-type | description | diameter | vendor | product-id | ...
+  // Rows that start with T\d+ in the first cell are tool entries.
+  const allRows = doc.querySelectorAll('tr');
+  allRows.forEach(row => {
+    const cells = [...row.querySelectorAll('td,th')].map(c => (c.innerText || c.textContent || '').trim());
+    if (cells.length < 2) return;
+
+    // Fusion table: first col is T-number (T1, T2, T10, etc.)
+    const tMatch = cells[0].match(/^T(\d+)$/i);
+    if (!tMatch) return;
+    const tNum = tMatch[1];
+    if (seen.has(tNum)) return;
     seen.add(tNum);
-    tools.push({
-      fusionTNumber: 'T' + tNum,
-      type:          (match[2] || '').trim(),
-      diameter:      (match[3] || '').trim(),
-      description:   (match[4] || '').trim(),
-      vendor:        (match[5] || '').trim(),
-      productId:     (match[6] || '').trim()
-    });
-  }
 
-  // Fallback: scan for T## patterns in table rows
-  if (tools.length === 0) {
-    const rows = doc.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cells = [...row.querySelectorAll('td,th')].map(c => c.innerText.trim());
-      if (cells.length >= 2 && /^T\d+$/.test(cells[0])) {
-        const tNum = cells[0].replace('T','');
-        if (!seen.has(tNum)) {
-          seen.add(tNum);
-          tools.push({
-            fusionTNumber: 'T' + tNum,
-            type:          cells[1] || '',
-            diameter:      cells[2] || '',
-            description:   cells[3] || cells[1] || '',
-            vendor:        cells[4] || '',
-            productId:     cells[5] || ''
-          });
-        }
+    // Try to find useful fields — Fusion columns vary by version but
+    // description/name is usually col 1 or 2, diameter around col 3-5
+    // Walk all cells and pull what we can
+    let description = '', diameter = '', vendor = '', productId = '', toolType = '';
+    cells.forEach((cell, i) => {
+      if (i === 0) return; // skip T#
+      // Diameter: looks like a number (0.5, 0.375, 12, etc.)
+      if (!diameter && /^\d+(\.\d+)?$/.test(cell) && Number(cell) > 0 && Number(cell) < 10) {
+        diameter = cell;
+        return;
+      }
+      // Product ID: alphanumeric, no spaces, 4+ chars, not a plain number
+      if (!productId && /^[A-Z0-9\-_]{4,}$/i.test(cell) && isNaN(Number(cell)) && cell.length < 30) {
+        productId = cell;
+        return;
+      }
+      // First substantial text = description
+      if (!description && cell.length > 2 && isNaN(Number(cell))) {
+        description = cell;
+        return;
+      }
+      // Second substantial text = could be type or vendor
+      if (description && !vendor && cell.length > 2 && isNaN(Number(cell)) && cell !== description && cell !== productId) {
+        vendor = cell;
       }
     });
+
+    tools.push({
+      fusionTNumber: 'T' + tNum,
+      type:          toolType.trim(),
+      diameter:      diameter.trim(),
+      description:   description.trim(),
+      vendor:        vendor.trim(),
+      productId:     productId.trim(),
+      _rawCells:     cells  // keep for debug
+    });
+  });
+
+  if (tools.length > 0) return tools;
+
+  // ── Strategy 2: plain-text regex for older Fusion text-format sheets ─────
+  const text = doc.body ? (doc.body.innerText || doc.body.textContent) : htmlContent;
+  const toolPattern = /T(\d+)\b[^\n]*\n?[^\n]*/gm;
+  const lineGroups = [];
+  let m;
+  while ((m = toolPattern.exec(text)) !== null) {
+    const firstLine = m[0];
+    if (/Type:|Diameter:|Description:/i.test(firstLine + text.slice(m.index, m.index + 300))) {
+      lineGroups.push({ idx: m.index, tNum: m[1] });
+    }
   }
+  lineGroups.forEach(g => {
+    if (seen.has(g.tNum)) return;
+    const chunk = text.slice(g.idx, g.idx + 400);
+    const typeM  = chunk.match(/Type:\s*([^\n\r]+)/i);
+    const diaM   = chunk.match(/Diameter:\s*([\d.]+)/i);
+    const descM  = chunk.match(/Description:\s*([^\n\r]+)/i);
+    const vendM  = chunk.match(/Vendor:\s*([^\n\r]+)/i);
+    const prodM  = chunk.match(/Product(?:\s*ID|#|:)?\s*:?\s*([A-Z0-9\-_]{4,})/i);
+    seen.add(g.tNum);
+    tools.push({
+      fusionTNumber: 'T' + g.tNum,
+      type:          typeM  ? typeM[1].trim()  : '',
+      diameter:      diaM   ? diaM[1].trim()   : '',
+      description:   descM  ? descM[1].trim()  : '',
+      vendor:        vendM  ? vendM[1].trim()  : '',
+      productId:     prodM  ? prodM[1].trim()  : ''
+    });
+  });
 
   return tools;
 }
@@ -1236,12 +1281,23 @@ function matchTool(parsed) {
   return null;
 }
 
-function renderSetupConfirm(parsedTools, filename, partNumber) {
+function renderSetupConfirm(parsedTools, filename, partNumber, rawHtmlContent) {
   const container = document.getElementById('setup-confirm-' + partNumber);
   if (!container) return;
 
   if (parsedTools.length === 0) {
-    container.innerHTML = `<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:8px 0">No tools found in this file. Expected Fusion 360 setup sheet format.</div>`;
+    // Show first 600 chars of the parsed text so we can diagnose the format
+    const parser2 = new DOMParser();
+    const doc2 = parser2.parseFromString(rawHtmlContent || container._rawHtml || '', 'text/html');
+    const preview = (doc2.body ? (doc2.body.innerText || doc2.body.textContent) : '').slice(0, 600).replace(/</g,'&lt;');
+    container.innerHTML = `
+      <div style="font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 0">
+        No tools found in this file. Expected Fusion 360 setup sheet format.
+      </div>
+      <details style="margin-top:6px">
+        <summary style="font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer">Show raw file text (for debugging)</summary>
+        <pre style="font-family:var(--mono);font-size:10px;color:var(--text2);background:var(--bg3);padding:10px;border-radius:4px;overflow-x:auto;white-space:pre-wrap;margin-top:6px">${preview}...</pre>
+      </details>`;
     return;
   }
 
@@ -1280,6 +1336,7 @@ function renderSetupConfirm(parsedTools, filename, partNumber) {
   container.innerHTML = tableHTML;
   // Store parsed tools on container for access during confirm
   container._parsedTools = parsedTools;
+  container._rawHtml = rawHtmlContent || '';
 }
 
 async function confirmSetupImport(partNumber, filename) {
