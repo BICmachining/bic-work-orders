@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,17 +75,8 @@
     flex-wrap: wrap;
   }
 
-  .logo {
-    font-family: var(--mono);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .logo span { color: var(--text2); font-weight: 400; }
+  .logo-wrap { display: flex; align-items: center; }
+  .header-logo { height: 36px; width: auto; }
 
   .header-right {
     display: flex;
@@ -678,13 +670,18 @@
 <body>
 
 <div class="header">
-  <div class="logo">BIC <span>/ Dashboard</span></div>
+  <div class="logo-wrap">
+    <img src="Bell_Logo.jpg" alt="Bell Intercoolers" class="header-logo">
+  </div>
   <div class="header-right">
     <span class="last-updated" id="last-updated">—</span>
     <button class="hdr-btn" onclick="loadData()">&#8635; Refresh</button>
-    <a href="parts.html" class="hdr-btn">&#9741; Parts</a>
+    <a href="dashboard.html" class="hdr-btn active">Dashboard</a>
+    <a href="parts.html"     class="hdr-btn">Parts</a>
+    <a href="tools.html"     class="hdr-btn">Tools</a>
+    <a href="reorder.html"   class="hdr-btn">Reorder</a>
     <button class="hdr-btn" onclick="openSettings()">&#9881; Settings</button>
-    <a href="index.html" class="hdr-btn primary">+ New PO</a>
+    <a href="index.html"     class="hdr-btn primary">+ New PO</a>
   </div>
 </div>
 
@@ -765,9 +762,14 @@ function toggleTheme() {
 }
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
+const DEFAULT_SCRIPT = 'https://script.google.com/macros/s/AKfycbwPhuL9gsYgewRQCRcbyguqw3ogJUOXniqi9C_voFQZQlK_76LNXWyBLgkcCCs-yk3Feg/exec';
+
 function getConfig() {
-  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
-  catch { return {}; }
+  try {
+    const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    if (!cfg.script) { cfg.script = DEFAULT_SCRIPT; localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+    return cfg;
+  } catch { return { script: DEFAULT_SCRIPT }; }
 }
 
 // ── SETTINGS PANEL ────────────────────────────────────────────────────────────
