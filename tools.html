@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIC Work Orders — Tools</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.1/umd/index.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@0.21.1/umd/index.min.js" onerror="window._zxingLoadFailed=true"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
@@ -106,12 +106,17 @@
 
   /* Desktop table */
   .results-table-wrap { overflow-x: auto; }
-  .results-table { width: 100%; border-collapse: collapse; }
-  .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: 57px; z-index: 10; cursor: pointer; white-space: nowrap; user-select: none; }
-  .results-table th:hover { color: var(--accent); }
-  .results-table th.sort-asc::after { content: ' ↑'; color: var(--accent); }
-  .results-table th.sort-desc::after { content: ' ↓'; color: var(--accent); }
-  .results-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .results-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .results-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); background: var(--bg2); position: sticky; top: 57px; z-index: 10; cursor: pointer; white-space: nowrap; user-select: none; overflow: hidden; }
+  .results-table th .th-label { pointer-events: none; }
+  .results-table th:hover .th-label { color: var(--accent); }
+  .results-table th.sort-asc .th-label::after { content: ' ↑'; color: var(--accent); }
+  .results-table th.sort-desc .th-label::after { content: ' ↓'; color: var(--accent); }
+  .results-table th.col-drag-over { box-shadow: -3px 0 0 0 var(--accent) inset; }
+  .results-table th.col-drag-src { opacity: 0.45; }
+  .col-resize-handle { position: absolute; right: 0; top: 0; bottom: 0; width: 8px; cursor: col-resize; z-index: 2; background: transparent; border-right: 2px solid transparent; transition: border-color 0.15s; }
+  .col-resize-handle:hover, .col-resize-handle.resizing { border-right-color: var(--accent); }
+  .results-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .results-table tr:hover td { background: var(--bg3); cursor: pointer; }
   .id-cell { font-family: var(--mono); font-size: 11px; color: var(--text3); }
   .status-ok   { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 3px; background: rgba(46,204,113,0.15); color: var(--green); }
@@ -261,6 +266,8 @@
     .detail-actions { flex-direction: row; }
     .filter-bar { flex-wrap: nowrap; }
     .spec-grid { grid-template-columns: repeat(2, 1fr); }
+    .hero-logo { height: 72px !important; max-width: 85vw; object-fit: contain; }
+    .header-logo { height: 28px !important; }
   }
   @media (min-width: 641px) {
     .scan-btn { display: none; }
@@ -373,18 +380,8 @@
   <!-- Desktop table -->
   <div class="results-table-wrap" id="results-table-wrap">
     <table class="results-table" id="results-table">
-      <thead>
-        <tr>
-          <th onclick="sortBy('id')">ID</th>
-          <th onclick="sortBy('type')">Type</th>
-          <th onclick="sortBy('description')">Description</th>
-          <th onclick="sortBy('vendor')">Vendor</th>
-          <th onclick="sortBy('productNumber')">Product #</th>
-          <th onclick="sortBy('diameter')">Diameter</th>
-          <th onclick="sortBy('qty')">Qty</th>
-          <th>Status</th>
-        </tr>
-      </thead>
+      <colgroup id="results-colgroup"></colgroup>
+      <thead><tr id="results-thead-row"></tr></thead>
       <tbody id="results-tbody"></tbody>
     </table>
     <div id="empty-state" style="display:none"></div>
@@ -735,21 +732,141 @@ function clearFilters() {
   applyFilters();
 }
 
+// ── Column configuration (resize + reorder) ───────────────────────────────
+const DEFAULT_COLUMNS = [
+  { key: 'id',            label: 'ID',          sortField: 'id',            defWidth: 80  },
+  { key: 'type',          label: 'Type',        sortField: 'type',          defWidth: 150 },
+  { key: 'description',   label: 'Description', sortField: 'description',   defWidth: 240 },
+  { key: 'vendor',        label: 'Vendor',      sortField: 'vendor',        defWidth: 130 },
+  { key: 'productNumber', label: 'Product #',   sortField: 'productNumber', defWidth: 130 },
+  { key: 'diameter',      label: 'Diameter',    sortField: 'diameter',      defWidth: 100 },
+  { key: 'qty',           label: 'Qty',         sortField: 'qty',           defWidth: 60  },
+  { key: 'status',        label: 'Status',      sortField: null,            defWidth: 80  },
+];
+
+function loadColPrefs() {
+  try {
+    const s = localStorage.getItem('bic_col_prefs');
+    if (s) {
+      const saved = JSON.parse(s);
+      const byKey = Object.fromEntries(DEFAULT_COLUMNS.map(c => [c.key, c]));
+      const out = saved.map(p => byKey[p.key] ? { ...byKey[p.key], width: p.width || byKey[p.key].defWidth } : null).filter(Boolean);
+      DEFAULT_COLUMNS.forEach(c => { if (!out.find(o => o.key === c.key)) out.push({ ...c, width: c.defWidth }); });
+      return out;
+    }
+  } catch(e) {}
+  return DEFAULT_COLUMNS.map(c => ({ ...c, width: c.defWidth }));
+}
+
+function saveColPrefs() {
+  localStorage.setItem('bic_col_prefs', JSON.stringify(colOrder.map(c => ({ key: c.key, width: c.width }))));
+}
+
+let colOrder = loadColPrefs();
+let _colDragSrc = null;
+let _colDragging = false;
+
+function renderTableHeader() {
+  const cg   = document.getElementById('results-colgroup');
+  const thead = document.getElementById('results-thead-row');
+  if (!cg || !thead) return;
+
+  cg.innerHTML = colOrder.map(c => `<col data-col-key="${c.key}" style="width:${c.width}px">`).join('');
+
+  thead.innerHTML = colOrder.map((col, idx) => {
+    const sc = state.sortField === col.sortField && col.sortField ? (state.sortDir === 1 ? ' sort-asc' : ' sort-desc') : '';
+    return `<th class="${sc}" data-col-key="${col.key}" data-col-idx="${idx}" draggable="true" style="position:relative">` +
+           `<span class="th-label">${col.label}</span>` +
+           `<div class="col-resize-handle" draggable="false"></div></th>`;
+  }).join('');
+
+  thead.querySelectorAll('th').forEach((th, idx) => {
+    const col = colOrder[idx];
+    const colEl = () => cg.querySelectorAll('col')[idx];
+
+    // Sort on click (skip if dragging or clicking resize handle)
+    th.addEventListener('click', e => {
+      if (_colDragging) return;
+      if (e.target.classList.contains('col-resize-handle')) return;
+      if (col.sortField) sortBy(col.sortField);
+    });
+
+    // Drag to reorder
+    th.addEventListener('dragstart', e => {
+      _colDragSrc = idx;
+      _colDragging = false;
+      setTimeout(() => th.classList.add('col-drag-src'), 0);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    th.addEventListener('dragend', () => {
+      th.classList.remove('col-drag-src');
+      thead.querySelectorAll('th').forEach(t => t.classList.remove('col-drag-over'));
+      setTimeout(() => { _colDragging = false; }, 80);
+    });
+    th.addEventListener('dragover', e => {
+      e.preventDefault();
+      _colDragging = true;
+      thead.querySelectorAll('th').forEach(t => t.classList.remove('col-drag-over'));
+      if (_colDragSrc !== null && _colDragSrc !== idx) th.classList.add('col-drag-over');
+      e.dataTransfer.dropEffect = 'move';
+    });
+    th.addEventListener('drop', e => {
+      e.preventDefault();
+      thead.querySelectorAll('th').forEach(t => t.classList.remove('col-drag-over'));
+      if (_colDragSrc === null || _colDragSrc === idx) return;
+      const moved = colOrder.splice(_colDragSrc, 1)[0];
+      colOrder.splice(idx, 0, moved);
+      _colDragSrc = null;
+      saveColPrefs();
+      renderTableHeader();
+      renderResults(state.filtered);
+    });
+
+    // Resize handle
+    const handle = th.querySelector('.col-resize-handle');
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation();
+      handle.classList.add('resizing');
+      const startX = e.pageX;
+      const startW = th.offsetWidth;
+      const onMove = ev => {
+        const newW = Math.max(40, startW + ev.pageX - startX);
+        col.width = newW;
+        const ce = colEl(); if (ce) ce.style.width = newW + 'px';
+      };
+      const onUp = () => {
+        handle.classList.remove('resizing');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        saveColPrefs();
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
+}
+
+function renderCellForCol(col, item) {
+  const qty = getItemQty(item);
+  const min = getItemMinQty(item);
+  switch (col.key) {
+    case 'id':            return `<td class="id-cell">${esc(item._id || '')}</td>`;
+    case 'type':          return `<td><span class="type-badge">${esc(item.type || item._cat)}</span></td>`;
+    case 'description':   return `<td>${esc(item.description || '—')}</td>`;
+    case 'vendor':        return `<td>${esc(item.vendor || '—')}</td>`;
+    case 'productNumber': return `<td style="font-family:var(--mono);font-size:11px">${esc(item.productNumber || '—')}</td>`;
+    case 'diameter':      return `<td style="font-family:var(--mono);font-size:12px">${item.diameter ? item.diameter + (item.diameterUnit || 'in') : '—'}</td>`;
+    case 'qty':           return `<td style="font-family:var(--mono);font-size:12px">${qty}</td>`;
+    case 'status':        return `<td>${statusBadge(qty, min)}</td>`;
+    default:              return `<td></td>`;
+  }
+}
+
 function sortBy(field) {
   if (state.sortField === field) { state.sortDir *= -1; }
   else { state.sortField = field; state.sortDir = 1; }
-  // Re-run filters so the sort is applied to the full filtered set
   applyFilters();
-  // Update sort indicator arrows after render
-  document.querySelectorAll('.results-table th').forEach(th => {
-    th.classList.remove('sort-asc','sort-desc');
-  });
-  const headers = ['id','type','description','vendor','productNumber','diameter','qty',''];
-  const idx = headers.indexOf(field);
-  if (idx >= 0) {
-    const ths = document.querySelectorAll('.results-table th');
-    if (ths[idx]) ths[idx].classList.add(state.sortDir === 1 ? 'sort-asc' : 'sort-desc');
-  }
+  renderTableHeader(); // Refresh sort-asc/sort-desc class
 }
 
 // ── Render results ─────────────────────────────────────────────────────────
@@ -776,22 +893,9 @@ function renderResults(items) {
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('results-table-wrap').style.display = '';
 
-  tbody.innerHTML = items.map(item => {
-    const qty = getItemQty(item);
-    const min = getItemMinQty(item);
-    const dia = item.diameter ? item.diameter + (item.diameterUnit || 'in') : '—';
-    const desc = esc(item.description || '—');
-    return `<tr onclick="openDetail('${esc(item._id)}','${item._cat}')">
-      <td class="id-cell">${esc(item._id || '')}</td>
-      <td><span class="type-badge">${esc(item.type || item._cat)}</span></td>
-      <td>${desc}</td>
-      <td>${esc(item.vendor || '—')}</td>
-      <td style="font-family:var(--mono);font-size:11px">${esc(item.productNumber || '—')}</td>
-      <td style="font-family:var(--mono);font-size:12px">${dia}</td>
-      <td style="font-family:var(--mono);font-size:12px">${qty}</td>
-      <td>${statusBadge(qty, min)}</td>
-    </tr>`;
-  }).join('');
+  tbody.innerHTML = items.map(item =>
+    `<tr onclick="openDetail('${esc(item._id)}','${item._cat}')">${colOrder.map(col => renderCellForCol(col, item)).join('')}</tr>`
+  ).join('');
 
   // Cards (mobile)
   const cards = document.getElementById('cards-grid');
@@ -1812,11 +1916,29 @@ async function submitForm() {
 }
 
 // ── Camera scan ────────────────────────────────────────────────────────────
+let _activeCameraReader = null;
+
+function stopCameraScan() {
+  const wrap = document.getElementById('video-wrap');
+  if (wrap) wrap.style.display = 'none';
+  if (_activeCameraReader) { try { _activeCameraReader.reset(); } catch(e) {} _activeCameraReader = null; }
+}
+
 async function startCameraScan(inputElementId) {
-  if (!window.ZXing) { alert('ZXing library not loaded.'); return; }
+  // Graceful ZXing detection — unpkg exports to window.ZXing
+  const ZX = window.ZXing || window.zxing;
+  if (!ZX || !ZX.BrowserMultiFormatReader) {
+    if (window._zxingLoadFailed) {
+      alert('Camera scan library failed to load. Check your internet connection.\n\nTip: Bluetooth/USB scanners still work — just scan directly into the search box.');
+    } else {
+      alert('Camera scan library is still loading. Please try again in a moment.\n\nTip: Bluetooth/USB scanners work immediately — just scan into the search box.');
+    }
+    return;
+  }
   const wrap = document.getElementById('video-wrap');
   if (wrap) wrap.style.display = 'block';
-  const codeReader = new ZXing.BrowserMultiFormatReader();
+  const codeReader = new ZX.BrowserMultiFormatReader();
+  _activeCameraReader = codeReader;
   try {
     const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'video-preview');
     const input = document.getElementById(inputElementId);
@@ -1826,8 +1948,9 @@ async function startCameraScan(inputElementId) {
       applyFilters();
     }
     codeReader.reset();
+    _activeCameraReader = null;
   } catch (err) {
-    console.error('Scan error:', err);
+    if (err && err.name !== 'NotFoundException') console.error('Scan error:', err);
   } finally {
     if (wrap) wrap.style.display = 'none';
   }
@@ -1870,6 +1993,8 @@ function esc(s) {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 loadData().then(() => {
+  // Build the table header (columns, resize handles, drag-to-reorder)
+  renderTableHeader();
   // Support deep-link: tools.html#TL-006 → open detail directly
   const hash = location.hash.replace('#', '').trim();
   if (hash) {
