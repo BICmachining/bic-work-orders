@@ -611,7 +611,12 @@ async function loadData() {
     allLines = data.lineItems || [];
     allPOs = data.pos || [];
 
-    renderIndex('');
+    const deepLink = new URLSearchParams(location.search).get('part');
+    if (deepLink) {
+      showPartDetail(decodeURIComponent(deepLink));
+    } else {
+      renderIndex('');
+    }
   } catch (err) {
     document.getElementById('index-content').innerHTML =
       `<div class="no-results">Failed to load: ${err.message}</div>`;

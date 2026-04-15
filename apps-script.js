@@ -266,6 +266,9 @@ function updateTimes(p) {
       if (p.totalJobTime !== undefined && p.totalJobTime !== '') {
         lineSheet.getRange(i + 1, 15).setValue(Number(p.totalJobTime)); // col O: Total Job Time
       }
+      if (p.qtyMade !== undefined && p.qtyMade !== '') {
+        lineSheet.getRange(i + 1, 16).setValue(Number(p.qtyMade)); // col P: Qty Made
+      }
       return response({ success: true });
     }
   }
@@ -332,7 +335,8 @@ function getDashboardData() {
     notes:              r[11],
     statusUpdated:      formatDate(r[12]),  // col M
     cyclePerPart:       r[13] !== undefined && r[13] !== '' ? r[13] : '',  // col N
-    totalJobTime:       r[14] !== undefined && r[14] !== '' ? r[14] : ''   // col O
+    totalJobTime:       r[14] !== undefined && r[14] !== '' ? r[14] : '',  // col O
+    qtyMade:            r[15] !== undefined && r[15] !== '' ? r[15] : ''   // col P
   }));
 
   return response({ success: true, pos: pos, lineItems: lineItems });

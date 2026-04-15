@@ -497,7 +497,10 @@
     font-size: 12px;
     font-weight: 500;
     color: var(--accent);
+    text-decoration: none;
   }
+
+  .part-number:hover { text-decoration: underline; }
 
   .material-info {
     font-family: var(--mono);
@@ -983,12 +986,13 @@ function renderDashboard() {
 
       const cycleVal = l.cyclePerPart !== '' && l.cyclePerPart !== null && l.cyclePerPart !== undefined ? l.cyclePerPart : '';
       const totalVal = l.totalJobTime !== '' && l.totalJobTime !== null && l.totalJobTime !== undefined ? l.totalJobTime : '';
+      const qtyMadeVal = l.qtyMade !== '' && l.qtyMade !== null && l.qtyMade !== undefined ? l.qtyMade : '';
       const tsVal = l.statusUpdated ? `<div class="status-timestamp">${esc(l.statusUpdated)}</div>` : '';
 
       return `<tr>
         <td style="color:var(--text3);font-family:var(--mono);font-size:11px;white-space:nowrap">${esc(l.line)}</td>
         <td>
-          <div class="part-number">${esc(l.partNumber)}</div>
+          <a class="part-number" href="parts.html?part=${encodeURIComponent(l.partNumber)}">${esc(l.partNumber)}</a>
           <div style="font-size:11px;color:var(--text2);margin-top:2px">${esc(l.description)}</div>
           ${matInfo}
         </td>
@@ -1006,6 +1010,14 @@ function renderDashboard() {
         </td>
         <td>
           <div class="time-inputs">
+            <div class="time-row">
+              <span class="time-label">Qty made</span>
+              <input class="time-input" type="number" min="0" step="1"
+                value="${esc(String(qtyMadeVal))}"
+                id="qtymade-${safePN}-${safeLine}"
+                placeholder="—">
+              <span class="time-unit">ea</span>
+            </div>
             <div class="time-row">
               <span class="time-label">Per part</span>
               <input class="time-input" type="number" min="0" step="1"
@@ -1159,22 +1171,25 @@ async function saveTimes(poNumber, line) {
   const cfg = getConfig();
   if (!cfg.script) return;
 
-  const cycleEl = document.getElementById(`cycle-${poNumber}-${line}`);
-  const totalEl = document.getElementById(`total-${poNumber}-${line}`);
-  const btnEl   = document.getElementById(`timebtn-${poNumber}-${line}`);
+  const cycleEl   = document.getElementById(`cycle-${poNumber}-${line}`);
+  const totalEl   = document.getElementById(`total-${poNumber}-${line}`);
+  const qtyMadeEl = document.getElementById(`qtymade-${poNumber}-${line}`);
+  const btnEl     = document.getElementById(`timebtn-${poNumber}-${line}`);
 
-  const cycleVal = cycleEl ? cycleEl.value.trim() : '';
-  const totalVal = totalEl ? totalEl.value.trim() : '';
+  const cycleVal   = cycleEl   ? cycleEl.value.trim()   : '';
+  const totalVal   = totalEl   ? totalEl.value.trim()   : '';
+  const qtyMadeVal = qtyMadeEl ? qtyMadeEl.value.trim() : '';
 
-  if (cycleVal === '' && totalVal === '') return;
+  if (cycleVal === '' && totalVal === '' && qtyMadeVal === '') return;
 
   if (btnEl) { btnEl.textContent = 'Saving...'; btnEl.disabled = true; }
 
   // Update local data
   const item = allLines.find(l => String(l.poNumber) === String(poNumber) && String(l.line) === String(line));
   if (item) {
-    if (cycleVal !== '') item.cyclePerPart = cycleVal;
-    if (totalVal !== '') item.totalJobTime = totalVal;
+    if (cycleVal   !== '') item.cyclePerPart = cycleVal;
+    if (totalVal   !== '') item.totalJobTime = totalVal;
+    if (qtyMadeVal !== '') item.qtyMade      = qtyMadeVal;
   }
 
   try {
@@ -1183,7 +1198,8 @@ async function saveTimes(poNumber, line) {
       '&poNumber=' + encodeURIComponent(poNumber) +
       '&line=' + encodeURIComponent(line) +
       '&cyclePerPart=' + encodeURIComponent(cycleVal) +
-      '&totalJobTime=' + encodeURIComponent(totalVal);
+      '&totalJobTime=' + encodeURIComponent(totalVal) +
+      '&qtyMade=' + encodeURIComponent(qtyMadeVal);
 
     const resp = await fetch(url);
     const result = await resp.json();
