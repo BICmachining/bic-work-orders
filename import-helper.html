@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIC — One-Time Data Import Helper</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117; --bg2: #171b24; --bg3: #1e2433;
+    --border: #2a3045; --border2: #3a4460;
+    --text: #e8ecf4; --text2: #8b95b0; --text3: #556080;
+    --accent: #4a9eff; --green: #2ecc71; --yellow: #f39c12; --red: #e74c3c;
+    --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); padding: 24px; }
+  h1 { font-family: var(--mono); font-size: 18px; color: var(--accent); margin-bottom: 6px; }
+  .subtitle { color: var(--text3); font-size: 13px; margin-bottom: 32px; }
+  .warn { background: #3a2a0a; border: 1px solid var(--yellow); border-radius: 6px; padding: 12px 16px; color: var(--yellow); font-size: 13px; margin-bottom: 24px; }
+  .section { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  .section h2 { font-family: var(--mono); font-size: 13px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+  input[type=file] { display: block; font-size: 13px; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px; width: 100%; margin-bottom: 12px; cursor: pointer; }
+  button { font-family: var(--mono); font-size: 12px; padding: 8px 18px; border-radius: 4px; border: 1px solid var(--accent); color: var(--accent); background: transparent; cursor: pointer; transition: all 0.15s; }
+  button:hover { background: var(--accent); color: #0f1117; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button.primary { background: var(--accent); color: #0f1117; border-color: var(--accent); }
+  button.primary:hover { background: #2d7de0; border-color: #2d7de0; }
+  button.danger { border-color: var(--red); color: var(--red); }
+  button.danger:hover { background: var(--red); color: #fff; }
+  .log { background: #0a0c10; border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; font-family: var(--mono); font-size: 11px; line-height: 1.7; max-height: 300px; overflow-y: auto; margin-top: 12px; white-space: pre-wrap; }
+  .log .ok   { color: var(--green); }
+  .log .warn { color: var(--yellow); background: none; border: none; padding: 0; font-size: 11px; }
+  .log .err  { color: var(--red); }
+  .log .info { color: var(--text2); }
+  .progress { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-top: 8px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  .config-row { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+  input[type=text] { font-family: var(--mono); font-size: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 8px 12px; flex: 1; }
+</style>
+</head>
+<body>
+
+<h1>BIC — One-Time Data Import Helper</h1>
+<p class="subtitle">Run this page ONCE after deploying the updated Apps Script. Do not run it again or you will create duplicate records.</p>
+
+<div class="warn">
+  ⚠ Prerequisites: (1) Apps Script redeployed with new tooling actions, (2) <strong>initializeToolingSheets() run in the Apps Script editor</strong>, (3) New URL saved in Settings on the target device.
+</div>
+
+<div class="section">
+  <h2>Sheet Setup Check</h2>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Verify the tooling sheets exist before importing. If this fails, run <code style="color:var(--accent)">initializeToolingSheets()</code> in the Apps Script editor first.</p>
+  <button onclick="checkSheetSetup()">Check Sheet Setup</button>
+  <div class="log" id="setupLog" style="margin-top:12px;">— click to check —</div>
+</div>
+
+<div class="section">
+  <h2>Apps Script URL</h2>
+  <div class="config-row">
+    <input type="text" id="scriptUrl" placeholder="Paste your Apps Script Web App URL here (or it will be read from localStorage)">
+    <button onclick="loadUrlFromStorage()">Load from localStorage</button>
+  </div>
+</div>
+
+<!-- Step 3a -->
+<div class="section">
+  <h2>Step 3a — Import Fusion Library (VF4SS_Library.json)</h2>
+  <label>Select VF4SS_Library.json</label>
+  <input type="file" id="fusionFile" accept=".json">
+  <div class="row">
+    <button onclick="previewFusion()">Preview (dry run)</button>
+    <button class="primary" id="btnImportFusion" onclick="importFusion(false)" disabled>Import to Sheet</button>
+  </div>
+  <div class="progress" id="fusionProgress"></div>
+  <div class="log" id="fusionLog">— ready —</div>
+</div>
+
+<!-- Step 3b -->
+<div class="section">
+  <h2>Step 3b — Import Tooling Spreadsheet (Tooling.xlsx)</h2>
+  <label>Select Tooling.xlsx</label>
+  <input type="file" id="toolingFile" accept=".xlsx,.xls">
+  <div class="row">
+    <button onclick="previewTooling()">Preview (dry run)</button>
+    <button class="primary" id="btnImportTooling" onclick="importTooling(false)" disabled>Import to Sheet</button>
+  </div>
+  <div class="progress" id="toolingProgress"></div>
+  <div class="log" id="toolingLog">— ready —</div>
+</div>
+
+<!-- Step 3c -->
+<div class="section">
+  <h2>Step 3c — Import Machined Parts Log (Machined_Parts_Log.xlsx)</h2>
+  <label>Select Machined Parts Log.xlsx</label>
+  <input type="file" id="partsFile" accept=".xlsx,.xls">
+  <div class="row">
+    <button onclick="previewParts()">Preview (dry run)</button>
+    <button class="primary" id="btnImportParts" onclick="importParts(false)" disabled>Import to Sheet</button>
+  </div>
+  <div class="progress" id="partsProgress"></div>
+  <div class="log" id="partsLog">— ready —</div>
+</div>
+
+<script>
+// ─── Config ────────────────────────────────────────────────────────────────
+
+function getScriptUrl() {
+  const manual = document.getElementById('scriptUrl').value.trim();
+  if (manual) return manual;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('bic_config')) || {};
+    return cfg.script || '';
+  } catch { return ''; }
+}
+
+function loadUrlFromStorage() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('bic_config')) || {};
+    if (cfg.script) {
+      document.getElementById('scriptUrl').value = cfg.script;
+      appendLog('fusionLog', 'info', 'Loaded URL from localStorage.');
+    } else {
+      appendLog('fusionLog', 'warn', 'No URL found in localStorage bic_config.script');
+    }
+  } catch { appendLog('fusionLog', 'err', 'Failed to read localStorage.'); }
+}
+
+// ─── Logging ───────────────────────────────────────────────────────────────
+
+function appendLog(logId, type, msg) {
+  const el = document.getElementById(logId);
+  if (el.textContent === '— ready —') el.textContent = '';
+  el.innerHTML += `<span class="${type}">${escHtml(msg)}\n</span>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setProgress(id, msg) {
+  document.getElementById(id).textContent = msg;
+}
+
+// ─── API helper ────────────────────────────────────────────────────────────
+
+async function callScript(params) {
+  const url = getScriptUrl();
+  if (!url) throw new Error('No Apps Script URL configured.');
+  const qs = Object.entries(params).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  const resp = await fetch(url + '?' + qs);
+  const data = await resp.json();
+  return data;
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── Sheet setup check ─────────────────────────────────────────────────────
+
+async function checkSheetSetup() {
+  const logId = 'setupLog';
+  document.getElementById(logId).textContent = '';
+  appendLog(logId, 'info', 'Calling getToolingData to verify sheet tabs...');
+  try {
+    const res = await callScript({ action: 'getToolingData' });
+    if (res.success) {
+      appendLog(logId, 'ok', `✓ Tools tab: ${res.tools.length} rows`);
+      appendLog(logId, 'ok', `✓ Inserts tab: ${res.inserts.length} rows`);
+      appendLog(logId, 'ok', `✓ Holders tab: ${res.holders.length} rows`);
+      appendLog(logId, 'ok', `✓ Machines tab: ${res.machines.length} rows`);
+      appendLog(logId, 'ok', 'All tooling sheets are initialized. You may proceed with imports.');
+    } else {
+      appendLog(logId, 'err', 'Error: ' + res.error);
+      appendLog(logId, 'warn', 'Run initializeToolingSheets() in the Apps Script editor, then redeploy.');
+    }
+  } catch(e) {
+    appendLog(logId, 'err', 'Network error: ' + e.message);
+    appendLog(logId, 'warn', 'Check that your Apps Script URL is correct and the script is deployed.');
+  }
+}
+
+// ─── Step 3a: Fusion JSON ──────────────────────────────────────────────────
+
+let fusionRecords = null; // parsed & cleaned records ready to send
+let holderRecords = null;
+let fusionDryRunDone = false;
+
+function parseFusionUnit(unit) {
+  if (!unit) return 'in';
+  if (unit.toLowerCase().includes('mm') || unit.toLowerCase().includes('millimeter')) return 'mm';
+  return 'in';
+}
+
+function parseFusionToolingType(tool) {
+  const type = (tool.type || '').toLowerCase();
+  const desc = (tool.description || '').toLowerCase();
+  if (type.includes('face mill') || type.includes('boring bar') || desc.includes('insert')) return 'inserted';
+  return 'solid';
+}
+
+function parseFusionData(json) {
+  const items = json.data || [];
+  const tools = [];
+  const holders = [];
+  const holderProductSet = new Set();
+
+  items.forEach(item => {
+    const vendor = (item.vendor || '').trim();
+    const productId = (item['product-id'] || '').trim();
+    if (!vendor || !productId) return; // filter: must have both
+
+    const unit = parseFusionUnit(item.unit);
+    const geo = item.geometry || {};
+    const toolingType = parseFusionToolingType(item);
+
+    tools.push({
+      type:          item.type || '',
+      toolingType:   toolingType,
+      description:   item.description || '',
+      vendor:        vendor,
+      productNumber: productId,
+      productUrl:    item['product-link'] || '',
+      diameter:      geo.DC || '',
+      diameterUnit:  unit,
+      flutes:        geo.NOF || '',
+      oal:           geo.OAL || '',
+      oalUnit:       unit,
+      cornerRadius:  geo.RE || '',
+      tipAngle:      geo.SIG || '',
+      taperAngle:    geo.TAPER_ANGLE || '',
+      threadPitch:   geo.TP || '',
+      bodyMaterial:  item.BMC || 'unspecified',
+      stockQty:      0,
+      minQty:        0,
+      lastPrice:     '',
+      lastOrderDate: '',
+      fusionGuid:    item.guid || '',
+      notes:         ''
+    });
+
+    // Holder extraction
+    const h = item.holder;
+    if (h && h['product-id'] && h['product-id'].trim() && !holderProductSet.has(h['product-id'].trim())) {
+      holderProductSet.add(h['product-id'].trim());
+      holders.push({
+        description:   h.description || 'Holder',
+        vendor:        h.vendor || vendor,
+        productNumber: h['product-id'].trim(),
+        productUrl:    h['product-link'] || '',
+        type:          (h.type || '').toLowerCase().includes('collet') ? 'ER collet chuck' :
+                       (h.type || '').toLowerCase().includes('shrink') ? 'shrink fit' :
+                       (h.type || '').toLowerCase().includes('hydraulic') ? 'hydraulic' : 'milling chuck',
+        taper:         'CAT40',
+        boreCapacity:  '',
+        qtyOnHand:     0,
+        minQty:        0,
+        lastPrice:     '',
+        lastOrderDate: '',
+        notes:         ''
+      });
+    }
+  });
+
+  return { tools, holders };
+}
+
+async function previewFusion() {
+  const file = document.getElementById('fusionFile').files[0];
+  if (!file) { alert('Select VF4SS_Library.json first.'); return; }
+  const logId = 'fusionLog';
+  document.getElementById(logId).textContent = '';
+  try {
+    const text = await file.text();
+    const json = JSON.parse(text);
+    const { tools, holders } = parseFusionData(json);
+    fusionRecords = tools;
+    holderRecords = holders;
+    fusionDryRunDone = true;
+    appendLog(logId, 'ok', `Parsed ${tools.length} tools with vendor+product-id (out of ${(json.data||[]).length} total).`);
+    appendLog(logId, 'ok', `Parsed ${holders.length} unique holders.`);
+    appendLog(logId, 'info', 'First 5 tools:');
+    tools.slice(0, 5).forEach(t => appendLog(logId, 'info', `  ${t.vendor} | ${t.productNumber} | ${t.description}`));
+    appendLog(logId, 'info', 'First 3 holders:');
+    holders.slice(0, 3).forEach(h => appendLog(logId, 'info', `  ${h.vendor} | ${h.productNumber} | ${h.description}`));
+    appendLog(logId, 'warn', 'Review above, then click "Import to Sheet" to proceed.');
+    document.getElementById('btnImportFusion').disabled = false;
+  } catch (err) {
+    appendLog(logId, 'err', 'Parse error: ' + err.message);
+  }
+}
+
+async function importFusion(dryRun) {
+  if (!fusionRecords) { alert('Run Preview first.'); return; }
+  const logId = 'fusionLog';
+  const btn = document.getElementById('btnImportFusion');
+  btn.disabled = true;
+
+  appendLog(logId, 'info', `\nStarting import of ${fusionRecords.length} tools + ${holderRecords.length} holders...`);
+
+  let ok = 0, err = 0;
+  for (let i = 0; i < holderRecords.length; i++) {
+    const h = holderRecords[i];
+    setProgress('fusionProgress', `Holders: ${i+1}/${holderRecords.length}`);
+    try {
+      const result = await callScript({ action: 'addHolder', ...h });
+      if (result.success) { ok++; appendLog(logId, 'ok', `  Holder ${result.holderId}: ${h.productNumber}`); }
+      else { appendLog(logId, 'warn', `  Holder skip: ${result.error}`); }
+    } catch(e) { err++; appendLog(logId, 'err', `  Holder error: ${e.message}`); }
+    await delay(200);
+  }
+
+  for (let i = 0; i < fusionRecords.length; i++) {
+    const t = fusionRecords[i];
+    setProgress('fusionProgress', `Tools: ${i+1}/${fusionRecords.length}`);
+    try {
+      const result = await callScript({ action: 'addTool', ...t });
+      if (result.success) { ok++; appendLog(logId, 'ok', `  Tool ${result.toolId}: ${t.productNumber} — ${t.description}`); }
+      else { appendLog(logId, 'warn', `  Tool skip: ${result.error}`); }
+    } catch(e) { err++; appendLog(logId, 'err', `  Tool error: ${e.message}`); }
+    await delay(200);
+  }
+
+  setProgress('fusionProgress', `Done. ${ok} imported, ${err} errors.`);
+  appendLog(logId, ok > 0 ? 'ok' : 'err', `\nImport complete: ${ok} records written, ${err} errors.`);
+}
+
+// ─── Step 3b: Tooling.xlsx ─────────────────────────────────────────────────
+
+let toolingXlsxData = null;
+
+async function readXlsx(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        resolve(wb);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function sheetToRows(wb, sheetName) {
+  const ws = wb.Sheets[sheetName];
+  if (!ws) return null;
+
+  // Get raw rows as arrays so we can detect the real header row ourselves
+  const raw = XLSX.utils.sheet_to_json(ws, { defval: '', header: 1 });
+  if (!raw || raw.length === 0) return [];
+
+  // Find the first row that looks like real column headers:
+  // It should have at least 3 non-empty, non-numeric cells
+  let headerIdx = 0;
+  for (let i = 0; i < Math.min(5, raw.length); i++) {
+    const nonEmpty = raw[i].filter(c => c !== '' && c !== null && isNaN(Number(c)));
+    if (nonEmpty.length >= 3) { headerIdx = i; break; }
+  }
+
+  const headers = raw[headerIdx].map(h => String(h === null || h === undefined ? '' : h).trim());
+  const dataRows = raw.slice(headerIdx + 1);
+
+  return dataRows
+    .filter(row => row.some(cell => cell !== '' && cell !== null && cell !== undefined))
+    .map(row => {
+      const obj = {};
+      headers.forEach((h, i) => { if (h) obj[h] = row[i] !== undefined ? row[i] : ''; });
+      return obj;
+    });
+}
+
+// Return the actual key in row `r` that matches any of the candidate names (case-insensitive)
+function colKey(r, ...candidates) {
+  const keys = Object.keys(r);
+  for (const c of candidates) {
+    const found = keys.find(k => k.trim().toUpperCase() === c.toUpperCase());
+    if (found !== undefined) return found;
+  }
+  return null;
+}
+
+// Read a value from row using flexible column name matching
+function col(r, ...candidates) {
+  const key = colKey(r, ...candidates);
+  return key !== null ? r[key] : '';
+}
+
+// Show the actual column headers found in a sheet for debugging
+function logHeaders(logId, wb, sheetName) {
+  const rows = sheetToRows(wb, sheetName);
+  if (!rows || rows.length === 0) { appendLog(logId, 'warn', `  "${sheetName}": empty or no rows`); return []; }
+  const headers = Object.keys(rows[0]);
+  appendLog(logId, 'info', `  "${sheetName}" headers: ${headers.join(' | ')}`);
+  return rows;
+}
+
+async function previewTooling() {
+  const file = document.getElementById('toolingFile').files[0];
+  if (!file) { alert('Select Tooling.xlsx first.'); return; }
+  const logId = 'toolingLog';
+  document.getElementById(logId).textContent = '';
+  try {
+    const wb = await readXlsx(file);
+    appendLog(logId, 'info', `Sheets found: ${wb.SheetNames.join(', ')}`);
+    appendLog(logId, 'info', '\nColumn headers detected:');
+
+    const endMills = logHeaders(logId, wb, 'End Mills');
+    const inserts  = logHeaders(logId, wb, 'Inserts');
+    const taps     = logHeaders(logId, wb, 'Taps');
+    const holders  = logHeaders(logId, wb, 'Tool Bodies');
+
+    // Count valid rows using flexible column matching
+    const emCount = endMills.filter(r => col(r,'ITEM NO.','ITEM NO','Item No','Item #','SKU','Part Number') !== '').length;
+    const inCount = inserts.filter(r  => col(r,'ITEM NO.','ITEM NO','Item No','Item #','SKU','Part Number') !== '').length;
+    const tapCount= taps.filter(r     => col(r,'ITEM NO.','ITEM NO','Item No','Item #','SKU','Part Number') !== '').length;
+    const hlCount = holders.filter(r  => col(r,'ITEM NO.','ITEM NO','Item No','Item #','SKU','Part Number') !== '').length;
+
+    appendLog(logId, emCount > 0 ? 'ok' : 'warn', `\nEnd Mills: ${emCount} data rows`);
+    appendLog(logId, inCount > 0 ? 'ok' : 'warn', `Inserts: ${inCount} data rows`);
+    appendLog(logId, tapCount> 0 ? 'ok' : 'warn', `Taps: ${tapCount} data rows`);
+    appendLog(logId, hlCount > 0 ? 'ok' : 'warn', `Tool Bodies: ${hlCount} data rows`);
+
+    if (emCount + inCount + tapCount + hlCount === 0) {
+      appendLog(logId, 'err', '\nNo data rows found. Check column headers above — they must include an item/product number column.');
+      appendLog(logId, 'warn', 'If your headers use different names (e.g. "Part #", "Model"), let me know and I\'ll update the mapping.');
+    }
+
+    toolingXlsxData = { wb, endMills, inserts, taps, holders };
+    document.getElementById('btnImportTooling').disabled = false;
+    appendLog(logId, 'warn', '\nReview above, then click "Import to Sheet" to proceed.');
+  } catch(err) {
+    appendLog(logId, 'err', 'Parse error: ' + err.message);
+  }
+}
+
+// Flexible column aliases for Tooling.xlsx
+const COL = {
+  itemNo:       ['ITEM NO.','ITEM NO','ITEM#','ITEM #','SKU','PART NUMBER','PART NO.','PART NO','MODEL'],
+  name:         ['NAME','DESCRIPTION','TOOL NAME','ITEM NAME'],
+  description:  ['DESCRIPTION','NOTES','NOTE','DETAIL'],
+  manufacturer: ['MANUFACTURER','VENDOR','BRAND','MFG','MFG.'],
+  diameter:     ['DIAMETER','DIA','DIA.','DIA (IN)','DIAMETER (IN)'],
+  cost:         ['COST PER ITEM','COST','PRICE','UNIT PRICE','UNIT COST'],
+  stockQty:     ['STOCK QUANTITY','STOCK QTY','QTY','QUANTITY','ON HAND','QTY ON HAND'],
+  reorderLevel: ['REORDER LEVEL','MIN QTY','MINIMUM QTY','REORDER'],
+  webLink:      ['WEB LINK','URL','LINK','PRODUCT URL','PRODUCT LINK'],
+  fluteType:    ['FLUTE TYPE','FLUTE'],
+  pointType:    ['POINT TYPE','POINT'],
+  torxScrew:    ['TORX SCREW','TORX','INSERT SCREW','SCREW SIZE'],
+};
+
+function colf(r, colAlias) {
+  return col(r, ...COL[colAlias]);
+}
+
+function hasItemNo(r) { return String(colf(r,'itemNo')).trim() !== ''; }
+
+async function importTooling(dryRun) {
+  if (!toolingXlsxData) { alert('Run Preview first.'); return; }
+  const { endMills, inserts, taps, holders } = toolingXlsxData;
+  const logId = 'toolingLog';
+  document.getElementById('btnImportTooling').disabled = true;
+
+  let ok = 0, err = 0;
+
+  // End Mills → Tools
+  appendLog(logId, 'info', '\nImporting End Mills...');
+  for (const r of (endMills || [])) {
+    if (!hasItemNo(r)) continue;
+    const pn = String(colf(r,'itemNo')).trim();
+    setProgress('toolingProgress', `End Mills: ${pn}`);
+    const tool = {
+      action:        'addTool',
+      type:          'flat end mill',
+      toolingType:   'solid',
+      bodyMaterial:  'carbide',
+      description:   String(colf(r,'name')).trim(),
+      vendor:        String(colf(r,'manufacturer')).trim(),
+      productNumber: pn,
+      productUrl:    '',
+      diameter:      colf(r,'diameter') || '',
+      diameterUnit:  'in',
+      oalUnit:       'in',
+      stockQty:      Number(colf(r,'stockQty'))   || 0,
+      minQty:        Number(colf(r,'reorderLevel'))|| 0,
+      lastPrice:     colf(r,'cost') || '',
+      notes:         String(colf(r,'description')).trim()
+    };
+    try {
+      const res = await callScript(tool);
+      if (res.success) { ok++; appendLog(logId, 'ok', `  ${res.toolId}: ${pn} ${tool.description}`); }
+      else appendLog(logId, 'warn', `  Skip ${pn}: ${res.error}`);
+    } catch(e) { err++; appendLog(logId, 'err', `  ${pn}: ${e.message}`); }
+    await delay(200);
+  }
+
+  // Taps → Tools
+  appendLog(logId, 'info', '\nImporting Taps...');
+  for (const r of (taps || [])) {
+    if (!hasItemNo(r)) continue;
+    const pn = String(colf(r,'itemNo')).trim();
+    setProgress('toolingProgress', `Taps: ${pn}`);
+    const noteParts = [
+      colf(r,'fluteType') ? 'Flute type: ' + colf(r,'fluteType') : '',
+      colf(r,'pointType') ? 'Point: '      + colf(r,'pointType') : ''
+    ].filter(Boolean);
+    const tool = {
+      action:        'addTool',
+      type:          'tap right hand',
+      toolingType:   'solid',
+      bodyMaterial:  'hss',
+      description:   String(colf(r,'name')).trim(),
+      vendor:        String(colf(r,'manufacturer')).trim(),
+      productNumber: pn,
+      productUrl:    '',
+      stockQty:      Number(colf(r,'stockQty'))   || 0,
+      minQty:        Number(colf(r,'reorderLevel'))|| 0,
+      lastPrice:     colf(r,'cost') || '',
+      notes:         noteParts.join(', ')
+    };
+    try {
+      const res = await callScript(tool);
+      if (res.success) { ok++; appendLog(logId, 'ok', `  ${res.toolId}: ${pn} ${tool.description}`); }
+      else appendLog(logId, 'warn', `  Skip ${pn}: ${res.error}`);
+    } catch(e) { err++; appendLog(logId, 'err', `  ${pn}: ${e.message}`); }
+    await delay(200);
+  }
+
+  // Inserts → Inserts tab
+  appendLog(logId, 'info', '\nImporting Inserts...');
+  for (const r of (inserts || [])) {
+    if (!hasItemNo(r)) continue;
+    const pn = String(colf(r,'itemNo')).trim();
+    setProgress('toolingProgress', `Inserts: ${pn}`);
+    const nameVal = String(colf(r,'name')).trim();
+    const insert = {
+      action:              'addInsert',
+      insertGeometry:      nameVal.split(' ')[0] || '',
+      description:         String(colf(r,'description')).trim() || nameVal,
+      vendor:              String(colf(r,'manufacturer')).trim(),
+      productNumber:       pn,
+      productUrl:          '',
+      grade:               '',
+      materialApplication: '',
+      qtyOnHand:           Number(colf(r,'stockQty'))   || 0,
+      minQty:              Number(colf(r,'reorderLevel'))|| 0,
+      lastPrice:           colf(r,'cost') || '',
+      notes:               ''
+    };
+    try {
+      const res = await callScript(insert);
+      if (res.success) { ok++; appendLog(logId, 'ok', `  ${res.insertId}: ${pn} ${insert.description}`); }
+      else appendLog(logId, 'warn', `  Skip ${pn}: ${res.error}`);
+    } catch(e) { err++; appendLog(logId, 'err', `  ${pn}: ${e.message}`); }
+    await delay(200);
+  }
+
+  // Tool Bodies → Holders (+ insert screws → Accessories)
+  appendLog(logId, 'info', '\nImporting Tool Bodies (Holders)...');
+  const pendingAccessories = [];
+  for (const r of (holders || [])) {
+    if (!hasItemNo(r)) continue;
+    const pn = String(colf(r,'itemNo')).trim();
+    setProgress('toolingProgress', `Tool Bodies: ${pn}`);
+    const holder = {
+      action:        'addHolder',
+      description:   String(colf(r,'name')).trim(),
+      vendor:        String(colf(r,'manufacturer')).trim(),
+      productNumber: pn,
+      productUrl:    String(colf(r,'webLink')).trim(),
+      type:          '',
+      taper:         '',
+      boreCapacity:  '',
+      qtyOnHand:     Number(colf(r,'stockQty'))   || 0,
+      minQty:        Number(colf(r,'reorderLevel'))|| 0,
+      lastPrice:     colf(r,'cost') || '',
+      notes:         ''
+    };
+    try {
+      const res = await callScript(holder);
+      if (res.success) {
+        ok++;
+        appendLog(logId, 'ok', `  ${res.holderId}: ${pn} ${holder.description}`);
+        const torx = String(colf(r,'torxScrew')).trim();
+        if (torx) {
+          pendingAccessories.push({
+            toolId: res.holderId, type: 'insert screw',
+            description: torx + ' Insert Screw', driveType: torx,
+            vendor: '', productNumber: ''
+          });
+        }
+      } else {
+        appendLog(logId, 'warn', `  Skip ${pn}: ${res.error}`);
+      }
+    } catch(e) { err++; appendLog(logId, 'err', `  ${pn}: ${e.message}`); }
+    await delay(200);
+  }
+
+  if (pendingAccessories.length > 0) {
+    appendLog(logId, 'info', `\nImporting ${pendingAccessories.length} insert screw accessories...`);
+    for (const a of pendingAccessories) {
+      try {
+        const res = await callScript({ action: 'addAccessory', ...a });
+        if (res.success) { ok++; appendLog(logId, 'ok', `  ${res.accessoryId}: ${a.description}`); }
+        else appendLog(logId, 'warn', `  Skip: ${res.error}`);
+      } catch(e) { err++; appendLog(logId, 'err', `  ${e.message}`); }
+      await delay(200);
+    }
+  }
+
+  setProgress('toolingProgress', `Done. ${ok} imported, ${err} errors.`);
+  appendLog(logId, ok > 0 ? 'ok' : 'warn', `\nImport complete: ${ok} records written, ${err} errors.`);
+}
+
+// ─── Step 3c: Machined Parts Log ───────────────────────────────────────────
+
+let partsXlsxData = null;
+
+async function previewParts() {
+  const file = document.getElementById('partsFile').files[0];
+  if (!file) { alert('Select the Machined Parts Log file first.'); return; }
+  const logId = 'partsLog';
+  document.getElementById(logId).textContent = '';
+  try {
+    const wb = await readXlsx(file);
+    appendLog(logId, 'info', `Sheets: ${wb.SheetNames.join(', ')}`);
+    const INVALID_PO = new Set(['none','tbd','n/a','na','-','--','?','']);
+    const rows = sheetToRows(wb, 'Sheet1') || sheetToRows(wb, wb.SheetNames[0]) || [];
+    const valid = rows.filter(r => {
+      const po = String(r['Machining PO'] || '').trim();
+      if (INVALID_PO.has(po.toLowerCase())) return false;
+      return r['Status'] === 'Complete' && r['Part Name'] && String(r['Part Name']).trim();
+    });
+    appendLog(logId, 'ok', `${valid.length} rows with Status=Complete and non-empty Part Name.`);
+    const samplePos = [...new Set(valid.map(r => r['Machining PO']).filter(Boolean))].slice(0, 5);
+    appendLog(logId, 'info', `Sample PO numbers: ${samplePos.join(', ')}`);
+    partsXlsxData = { wb, rows, sheetName: wb.SheetNames[0] };
+    document.getElementById('btnImportParts').disabled = false;
+    appendLog(logId, 'warn', 'Review above, then click "Import to Sheet" to proceed.');
+  } catch(err) {
+    appendLog(logId, 'err', 'Parse error: ' + err.message);
+  }
+}
+
+async function importParts(dryRun) {
+  if (!partsXlsxData) { alert('Run Preview first.'); return; }
+  const { wb, sheetName } = partsXlsxData;
+  const logId = 'partsLog';
+  const btn = document.getElementById('btnImportParts');
+  btn.disabled = true;
+
+  const INVALID_PO = new Set(['none','tbd','n/a','na','-','--','?','']);
+
+  const rows = sheetToRows(wb, sheetName) || [];
+  const valid = rows.filter(r => {
+    const po = String(r['Machining PO'] || '').trim();
+    if (INVALID_PO.has(po.toLowerCase())) return false;
+    return r['Status'] === 'Complete' && r['Part Name'] && String(r['Part Name']).trim();
+  });
+
+  appendLog(logId, 'info', `Importing ${valid.length} complete line items...`);
+
+  // Deduplicate POs
+  const posSeen = new Set();
+  let ok = 0, skip = 0, err = 0;
+
+  for (let i = 0; i < valid.length; i++) {
+    const r = valid[i];
+    setProgress('partsProgress', `Row ${i+1}/${valid.length}: PO ${r['Machining PO']}`);
+
+    const poNumber = String(r['Machining PO']).trim();
+    const customer = (r['Customer'] || '').trim();
+    const item = (r['Item'] || '').trim();
+    const orderDesc = [customer, item].filter(Boolean).join(' — ');
+    const dueDate = r['Due Date'] ? formatDateVal(r['Due Date']) : '';
+    const completionDate = r['Completion Date'] ? formatDateVal(r['Completion Date']) : '';
+
+    // Submit PO if not seen yet
+    if (!posSeen.has(poNumber)) {
+      posSeen.add(poNumber);
+      const po = {
+        poNumber:         poNumber,
+        poDate:           dueDate,
+        orderedBy:        '',
+        orderDescription: orderDesc,
+        handwrittenNotes: ''
+      };
+      const lineItemsArr = [{
+        line:                '001',
+        partNumber:          String(r['Part Name'] || '').trim(),
+        qty:                 r['Part Qty'] || 1,
+        description:         r['Part Description'] || '',
+        materialPartNumber:  '',
+        materialDescription: r['Materials'] || '',
+        materialUsed:        '',
+        materialPerPart:     '',
+        dueDate:             dueDate,
+        notes:               buildCompletionNote(r)
+      }];
+      try {
+        const res = await callScript({
+          action:    'submitPO',
+          po:        encodeURIComponent(JSON.stringify(po)),
+          lineItems: encodeURIComponent(JSON.stringify(lineItemsArr))
+        });
+        if (res.success) { ok++; appendLog(logId, 'ok', `  PO ${poNumber}: created`); }
+        else if (res.error && res.error.includes('already exists')) {
+          skip++;
+          appendLog(logId, 'info', `  PO ${poNumber}: already exists, skipped`);
+        } else {
+          err++;
+          appendLog(logId, 'warn', `  PO ${poNumber}: ${res.error}`);
+        }
+      } catch(e) { err++; appendLog(logId, 'err', `  PO ${poNumber}: ${e.message}`); }
+      await delay(300);
+    }
+  }
+
+  setProgress('partsProgress', `Done. ${ok} POs created, ${skip} skipped (duplicate), ${err} errors.`);
+  appendLog(logId, ok > 0 ? 'ok' : 'warn', `\nImport complete: ${ok} created, ${skip} skipped, ${err} errors.`);
+}
+
+function buildCompletionNote(r) {
+  const partQty = r['Part Qty'];
+  const qtyComplete = r['Qty Complete'];
+  if (qtyComplete && String(qtyComplete) !== String(partQty)) {
+    return 'Qty complete: ' + qtyComplete;
+  }
+  return '';
+}
+
+function formatDateVal(val) {
+  if (!val) return '';
+  // SheetJS returns numbers for dates in xlsx
+  if (typeof val === 'number') {
+    const d = XLSX.SSF.parse_date_code(val);
+    if (d) return `${d.m}/${d.d}/${String(d.y).slice(-2)}`;
+  }
+  if (val instanceof Date) {
+    return `${val.getMonth()+1}/${val.getDate()}/${String(val.getFullYear()).slice(-2)}`;
+  }
+  return String(val);
+}
+</script>
+</body>
+</html>
