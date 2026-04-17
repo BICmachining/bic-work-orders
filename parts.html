@@ -613,6 +613,7 @@ async function loadData() {
 
     const deepLink = new URLSearchParams(location.search).get('part');
     if (deepLink) {
+      await loadToolingData();
       showPartDetail(decodeURIComponent(deepLink));
     } else {
       renderIndex('');
@@ -1020,21 +1021,26 @@ function showIndex() {
 
 // ── TOOLING DATA ──────────────────────────────────────────────────────────────
 const toolingState = { tools: [], inserts: [], holders: [], toolPartLinks: [], loaded: false };
+let _toolingPromise = null;
 
-async function loadToolingData() {
-  const cfg = getConfig();
-  if (!cfg.script) return;
-  try {
-    const resp = await fetch(cfg.script + '?action=getToolingData&t=' + Date.now());
-    const data = await resp.json();
-    if (data.success) {
-      toolingState.tools         = data.tools         || [];
-      toolingState.inserts       = data.inserts        || [];
-      toolingState.holders       = data.holders        || [];
-      toolingState.toolPartLinks = data.toolPartLinks  || [];
-      toolingState.loaded        = true;
-    }
-  } catch(e) { /* silently fail — tools section will show empty */ }
+function loadToolingData() {
+  if (_toolingPromise) return _toolingPromise;
+  _toolingPromise = (async () => {
+    const cfg = getConfig();
+    if (!cfg.script) return;
+    try {
+      const resp = await fetch(cfg.script + '?action=getToolingData&t=' + Date.now());
+      const data = await resp.json();
+      if (data.success) {
+        toolingState.tools         = data.tools         || [];
+        toolingState.inserts       = data.inserts        || [];
+        toolingState.holders       = data.holders        || [];
+        toolingState.toolPartLinks = data.toolPartLinks  || [];
+        toolingState.loaded        = true;
+      }
+    } catch(e) { /* silently fail — tools section will show empty */ }
+  })();
+  return _toolingPromise;
 }
 
 async function callScript(params) {
