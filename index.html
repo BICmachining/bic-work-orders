@@ -677,6 +677,10 @@
     Read PO with AI
   </button>
 
+  <button class="btn-secondary" onclick="startManualEntry()" style="width:100%;max-width:500px;padding:12px 20px;font-size:13px;">
+    &#9998; Enter Manually (no photo)
+  </button>
+
   <button class="btn-secondary" onclick="showConfig()">&#9881; Settings</button>
 </div>
 
@@ -698,7 +702,7 @@
       <p>Edit any field before saving. Click any cell to modify.</p>
     </div>
     <div class="review-actions">
-      <button class="btn-secondary" onclick="showCapture()">&#8592; Retake Photos</button>
+      <button class="btn-secondary" onclick="showCapture()">&#8592; Back</button>
     </div>
   </div>
 
@@ -748,6 +752,12 @@
   </div>
 
   <div id="status-bar" class="status-bar"></div>
+
+  <div style="margin-bottom:12px;">
+    <button class="btn-secondary" onclick="addBlankLine()" style="font-size:13px;padding:10px 18px;">
+      + Add Line
+    </button>
+  </div>
 
   <div class="submit-row">
     <button class="btn-secondary" onclick="showCapture()">Cancel</button>
@@ -962,6 +972,30 @@ Rules:
     showCapture();
     alert('Error reading PO: ' + err.message + '\n\nCheck your Gemini API key in Settings.');
   }
+}
+
+// ── MANUAL ENTRY ─────────────────────────────────────────────────────────────
+function startManualEntry() {
+  populateReview({ poNumber: '', poDate: '', orderedBy: '', orderDescription: '', handwrittenNotes: '', lineItems: [] });
+  addBlankLine();
+  showScreen('review');
+}
+
+function addBlankLine() {
+  const tbody = document.getElementById('line-items-body');
+  const idx = tbody.rows.length;
+  const lineNum = String(idx + 1).padStart(3, '0');
+  const newRow = createLineRow({
+    line: lineNum,
+    partNumber: '',
+    qty: '',
+    description: '',
+    materialPartNumber: '',
+    materialDescription: '',
+    materialUsed: '',
+    dueDate: ''
+  }, idx);
+  tbody.appendChild(newRow);
 }
 
 // ── REVIEW POPULATION ────────────────────────────────────────────────────────
