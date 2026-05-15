@@ -660,6 +660,157 @@
   .trend-month-count { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); }
   .trend-month-bar { height: 3px; background: var(--accent); border-radius: 2px; margin-top: 8px; }
 
+  /* DRAG HANDLE */
+  .drag-handle {
+    cursor: grab;
+    color: var(--text3);
+    font-size: 16px;
+    padding: 2px 8px 2px 0;
+    flex-shrink: 0;
+    user-select: none;
+    line-height: 1;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .po-card.drag-over { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* CUSTOM ORDER INDICATOR */
+  .order-indicator {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    background: rgba(74,158,255,0.08);
+    padding: 4px 10px;
+    border-radius: 20px;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .order-indicator button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    line-height: 1;
+    vertical-align: middle;
+  }
+
+  /* EDITABLE DUE DATE */
+  .due-date-wrap { display: flex; align-items: center; gap: 4px; }
+  .due-date { cursor: pointer; }
+  .edit-pencil {
+    font-size: 11px;
+    color: var(--text3);
+    opacity: 0;
+    transition: opacity 0.15s;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  td:hover .edit-pencil { opacity: 1; }
+  .due-date-input {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 3px 6px;
+    border-radius: 4px;
+    width: 120px;
+  }
+
+  /* LINE NOTES */
+  .line-notes-display {
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    display: block;
+  }
+  .line-notes-display:hover { color: var(--text); }
+  .line-notes-add {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+  }
+  .line-notes-add:hover { color: var(--accent); }
+  .line-notes-edit-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .line-notes-textarea {
+    font-family: var(--sans);
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 5px 7px;
+    border-radius: 4px;
+    width: 100%;
+    min-width: 120px;
+    resize: vertical;
+    min-height: 48px;
+  }
+  .line-notes-textarea:focus { outline: none; }
+  .btn-save-notes {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    align-self: flex-start;
+  }
+  .btn-save-notes:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-save-notes.saved { border-color: var(--green); color: var(--green); }
+
+  /* PO NOTES SECTION */
+  .po-notes-section {
+    display: none;
+    padding: 10px 18px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    gap: 8px;
+  }
+  .po-card.expanded .po-notes-section { display: flex; }
+  .po-notes-section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+  .po-notes-textarea {
+    font-family: var(--sans);
+    font-size: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 4px;
+    width: 100%;
+    resize: vertical;
+    min-height: 56px;
+    transition: border-color 0.15s;
+  }
+  .po-notes-textarea:focus { outline: none; border-color: var(--accent); }
+  .po-notes-save-row { display: flex; align-items: center; gap: 10px; }
+  .btn-save-po-notes {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    padding: 4px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-save-po-notes:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-save-po-notes.saved { border-color: var(--green); color: var(--green); }
+
   /* RESPONSIVE */
   @media (max-width: 600px) {
     .header { padding: 12px 16px; }
@@ -697,6 +848,7 @@
   <button class="filter-btn" onclick="setFilter('Complete',this)">Complete</button>
   <input type="text" class="filter-search" id="search" placeholder="Search PO # or part..." oninput="renderDashboard()">
   <button class="filter-btn hide-complete-btn" id="hide-complete-btn" onclick="toggleHideComplete()">Hide Complete</button>
+  <span class="order-indicator" id="order-indicator" style="display:none">&#9776; Custom order <button onclick="clearPoOrder()" title="Reset to default order">&times;</button></span>
 </div>
 
 <div class="stats" id="stats-bar"></div>
@@ -751,6 +903,9 @@ let allPOs = [];
 let allLines = [];
 let activeFilter = 'all';
 let hideComplete = false;
+const expandedPOs = new Set();
+const PO_ORDER_KEY = 'bic_po_order';
+let dndSourcePN = null;
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
 function applyTheme(theme) {
@@ -921,14 +1076,34 @@ function setFilter(f, btn) {
 // ── DASHBOARD RENDER ──────────────────────────────────────────────────────────
 function renderDashboard() {
   const search = (document.getElementById('search')?.value || '').toLowerCase();
-  let pos = [...allPOs];
-
-  pos.sort((a, b) => {
-    const linesA = allLines.filter(l => String(l.poNumber) === String(a.poNumber));
-    const linesB = allLines.filter(l => String(l.poNumber) === String(b.poNumber));
-    const urgency = { overdue: 0, 'due-soon': 1, ok: 2, complete: 3 };
-    return urgency[earliestDue(linesA)] - urgency[earliestDue(linesB)];
-  });
+  const savedOrder = getPoOrder();
+  let pos;
+  if (savedOrder.length > 0) {
+    pos = [...allPOs].sort((a, b) => {
+      const ai = savedOrder.indexOf(String(a.poNumber));
+      const bi = savedOrder.indexOf(String(b.poNumber));
+      if (ai === -1 && bi === -1) {
+        const lA = allLines.filter(l => String(l.poNumber) === String(a.poNumber));
+        const lB = allLines.filter(l => String(l.poNumber) === String(b.poNumber));
+        const u = { overdue: 0, 'due-soon': 1, ok: 2, complete: 3 };
+        return u[earliestDue(lA)] - u[earliestDue(lB)];
+      }
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+    const ind = document.getElementById('order-indicator');
+    if (ind) ind.style.display = 'flex';
+  } else {
+    pos = [...allPOs].sort((a, b) => {
+      const lA = allLines.filter(l => String(l.poNumber) === String(a.poNumber));
+      const lB = allLines.filter(l => String(l.poNumber) === String(b.poNumber));
+      const u = { overdue: 0, 'due-soon': 1, ok: 2, complete: 3 };
+      return u[earliestDue(lA)] - u[earliestDue(lB)];
+    });
+    const ind = document.getElementById('order-indicator');
+    if (ind) ind.style.display = 'none';
+  }
 
   const content = document.getElementById('dashboard-content');
 
@@ -962,6 +1137,7 @@ function renderDashboard() {
     if (hideComplete && allComplete) return;
 
     let cardClass = 'po-card';
+    if (expandedPOs.has(String(po.poNumber))) cardClass += ' expanded';
     if (allComplete) cardClass += ' all-complete';
     else if (dueClass === 'overdue') cardClass += ' overdue';
     else if (dueClass === 'due-soon') cardClass += ' due-soon';
@@ -981,6 +1157,8 @@ function renderDashboard() {
     const notesHtml = po.handwrittenNotes
       ? `<div class="po-notes">&#9888; Note: ${esc(po.handwrittenNotes)}</div>` : '';
 
+    const safePoNum = esc(po.poNumber);
+
     const lineRows = lines.map(l => {
       const dc = dueDateClass(l.dueDate, l.status);
       const sc = statusClass(l.status);
@@ -995,6 +1173,10 @@ function renderDashboard() {
       const totalVal = l.totalJobTime !== '' && l.totalJobTime !== null && l.totalJobTime !== undefined ? l.totalJobTime : '';
       const tsVal = l.statusUpdated ? `<div class="status-timestamp">${esc(l.statusUpdated)}</div>` : '';
 
+      const notesDisplay = l.notes
+        ? `<span class="line-notes-display" onclick="editLineNotes('${safePN}','${safeLine}')" title="Click to edit">${esc(l.notes)}</span>`
+        : `<span class="line-notes-add" onclick="editLineNotes('${safePN}','${safeLine}')" title="Click to add note">+ add note</span>`;
+
       return `<tr>
         <td style="color:var(--text3);font-family:var(--mono);font-size:11px;white-space:nowrap">${esc(l.line)}</td>
         <td>
@@ -1003,7 +1185,13 @@ function renderDashboard() {
           ${matInfo}
         </td>
         <td style="font-family:var(--mono);font-size:12px;text-align:center;white-space:nowrap">${esc(String(l.qty))}</td>
-        <td><span class="due-date ${dc}">${esc(l.dueDate) || '&mdash;'}</span></td>
+        <td>
+          <div class="due-date-wrap">
+            <span class="due-date ${dc}" id="duedate-${safePN}-${safeLine}"
+              onclick="editDueDate('${safePN}','${safeLine}')" title="Click to edit">${esc(l.dueDate) || '&mdash;'}</span>
+            <span class="edit-pencil" onclick="editDueDate('${safePN}','${safeLine}')">&#9998;</span>
+          </div>
+        </td>
         <td>
           <select class="status-select ${sc}" onchange="updateStatus('${safePN}','${safeLine}',this)">
             <option ${l.status==='Not Started'?'selected':''}>Not Started</option>
@@ -1036,26 +1224,40 @@ function renderDashboard() {
               onclick="saveTimes('${safePN}','${safeLine}')">Save</button>
           </div>
         </td>
-        <td style="font-size:12px;color:var(--text2)">${esc(l.notes)}</td>
+        <td id="notescell-${safePN}-${safeLine}">${notesDisplay}</td>
       </tr>`;
     }).join('');
 
     cards.push(`
-      <div class="${cardClass}" id="po-${esc(po.poNumber)}">
-        <div class="po-card-header" onclick="toggleCard('${esc(po.poNumber)}')">
+      <div class="${cardClass}" id="po-${safePoNum}" data-po="${safePoNum}"
+        draggable="true"
+        ondragstart="dndStart(event,'${safePoNum}')"
+        ondragover="dndOver(event,'${safePoNum}')"
+        ondragleave="dndLeave(event,'${safePoNum}')"
+        ondrop="dndDrop(event,'${safePoNum}')"
+        ondragend="dndEnd(event,'${safePoNum}')">
+        <div class="po-card-header" onclick="toggleCard('${safePoNum}')">
           <div class="po-meta">
-            <span class="po-number">PO #${esc(po.poNumber)}</span>
+            <span class="drag-handle" onclick="event.stopPropagation()" title="Drag to reorder">&#10880;</span>
+            <span class="po-number">PO #${safePoNum}</span>
             <span class="po-desc">${esc(po.orderDescription)}</span>
             <span class="po-by">${esc(po.orderedBy)}</span>
           </div>
           <div class="po-card-right">
             ${dueBadge}
             <div class="po-progress">${dots}</div>
-            <button class="btn-delete-po" onclick="deletePO(event,'${esc(po.poNumber)}')" title="Delete PO">&#128465;</button>
+            <button class="btn-delete-po" onclick="deletePO(event,'${safePoNum}')" title="Delete PO">&#128465;</button>
             <span class="chevron">&#9660;</span>
           </div>
         </div>
         ${notesHtml}
+        <div class="po-notes-section">
+          <div class="po-notes-section-label">PO Notes</div>
+          <textarea class="po-notes-textarea" id="ponotes-${safePoNum}" placeholder="Add notes for this PO...">${esc(po.poNotes || '')}</textarea>
+          <div class="po-notes-save-row">
+            <button class="btn-save-po-notes" id="ponotesbtn-${safePoNum}" onclick="savePONotes('${safePoNum}')">Save</button>
+          </div>
+        </div>
         <div class="po-lines">
           <table class="lines-table">
             <thead>
@@ -1063,7 +1265,7 @@ function renderDashboard() {
                 <th style="width:40px">#</th>
                 <th>Part / Description / Material</th>
                 <th style="width:44px">Qty</th>
-                <th style="width:88px">Due Date</th>
+                <th style="width:100px">Due Date</th>
                 <th style="width:160px">Status</th>
                 <th style="width:180px">Cycle Time</th>
                 <th>Notes</th>
@@ -1078,13 +1280,17 @@ function renderDashboard() {
   if (cards.length === 0) {
     content.innerHTML = '<div class="empty-state"><p>No matching work orders.</p></div>';
   } else {
-    content.innerHTML = '<div class="po-list">' + cards.join('') + '</div>';
+    content.innerHTML = '<div class="po-list" ondragover="dndOverList(event)" ondrop="dndDropList(event)">' + cards.join('') + '</div>';
   }
 }
 
 function toggleCard(poNum) {
   const card = document.getElementById('po-' + poNum);
-  if (card) card.classList.toggle('expanded');
+  if (card) {
+    card.classList.toggle('expanded');
+    if (card.classList.contains('expanded')) expandedPOs.add(String(poNum));
+    else expandedPOs.delete(String(poNum));
+  }
 }
 
 // ── DELETE PO ─────────────────────────────────────────────────────────────────
@@ -1211,6 +1417,267 @@ async function saveTimes(poNumber, line) {
   } catch (err) {
     alert('Failed to save times: ' + err.message);
     if (btnEl) { btnEl.textContent = 'Save'; btnEl.disabled = false; }
+  }
+}
+
+// ── DRAG AND DROP ─────────────────────────────────────────────────────────────
+function getPoOrder() {
+  try { return JSON.parse(localStorage.getItem(PO_ORDER_KEY)) || []; }
+  catch { return []; }
+}
+
+function savePoOrder(order) {
+  localStorage.setItem(PO_ORDER_KEY, JSON.stringify(order));
+}
+
+function clearPoOrder() {
+  localStorage.removeItem(PO_ORDER_KEY);
+  const ind = document.getElementById('order-indicator');
+  if (ind) ind.style.display = 'none';
+  renderDashboard();
+}
+
+function dndStart(event, poNumber) {
+  dndSourcePN = poNumber;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', poNumber);
+  setTimeout(() => {
+    const card = document.getElementById('po-' + poNumber);
+    if (card) card.style.opacity = '0.4';
+  }, 0);
+}
+
+function dndOver(event, poNumber) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (poNumber === dndSourcePN) return;
+  event.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.po-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+  const card = document.getElementById('po-' + poNumber);
+  if (card) card.classList.add('drag-over');
+}
+
+function dndLeave(event, poNumber) {
+  const card = document.getElementById('po-' + poNumber);
+  if (card) {
+    const rect = card.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right ||
+        event.clientY < rect.top  || event.clientY > rect.bottom) {
+      card.classList.remove('drag-over');
+    }
+  }
+}
+
+function dndEnd(event, poNumber) {
+  const card = document.getElementById('po-' + poNumber);
+  if (card) { card.style.opacity = ''; card.classList.remove('drag-over'); }
+  document.querySelectorAll('.po-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+  dndSourcePN = null;
+}
+
+function dndDrop(event, targetPN) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (!dndSourcePN || dndSourcePN === targetPN) { dndSourcePN = null; return; }
+  _applyDndOrder(dndSourcePN, targetPN);
+  dndSourcePN = null;
+}
+
+function dndOverList(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+}
+
+function dndDropList(event) {
+  event.preventDefault();
+  if (!dndSourcePN) return;
+  _applyDndOrder(dndSourcePN, null);
+  dndSourcePN = null;
+}
+
+function _applyDndOrder(sourcePN, targetPN) {
+  const allPONums = allPOs.map(p => String(p.poNumber));
+  let fullOrder = getPoOrder().filter(pn => allPONums.includes(pn));
+  allPONums.forEach(pn => { if (!fullOrder.includes(pn)) fullOrder.push(pn); });
+
+  const sourceIdx = fullOrder.indexOf(sourcePN);
+  if (sourceIdx !== -1) fullOrder.splice(sourceIdx, 1);
+
+  if (!targetPN) {
+    fullOrder.push(sourcePN);
+  } else {
+    const targetIdx = fullOrder.indexOf(targetPN);
+    if (targetIdx !== -1) fullOrder.splice(targetIdx, 0, sourcePN);
+    else fullOrder.push(sourcePN);
+  }
+
+  savePoOrder(fullOrder);
+  renderDashboard();
+}
+
+// ── DUE DATE EDIT ─────────────────────────────────────────────────────────────
+function editDueDate(poNumber, line) {
+  const spanId = 'duedate-' + poNumber + '-' + line;
+  const span = document.getElementById(spanId);
+  if (!span || span.tagName === 'INPUT') return;
+
+  const currentText = span.textContent.trim();
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.className = 'due-date-input';
+  input.id = spanId;
+
+  if (currentText && currentText !== '—') {
+    const parts = currentText.split('/');
+    if (parts.length === 3) {
+      let [m, d, y] = parts;
+      if (y.length === 2) y = '20' + y;
+      input.value = y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    }
+  }
+
+  span.replaceWith(input);
+  input.focus();
+
+  let committed = false;
+  function commit() {
+    if (committed) return;
+    committed = true;
+    const val = input.value;
+    let formatted = '';
+    if (val) {
+      const [y, m, d] = val.split('-');
+      formatted = parseInt(m) + '/' + parseInt(d) + '/' + y.slice(2);
+    }
+    persistDueDate(poNumber, line, formatted, input, span);
+  }
+
+  input.addEventListener('change', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { committed = true; input.replaceWith(span); }
+  });
+  input.addEventListener('blur', () => setTimeout(commit, 120));
+}
+
+async function persistDueDate(poNumber, line, dueDate, inputEl, origSpan) {
+  const cfg = getConfig();
+  const item = allLines.find(l => String(l.poNumber) === String(poNumber) && String(l.line) === String(line));
+  if (item) item.dueDate = dueDate;
+
+  const dc = dueDateClass(dueDate, item ? item.status : '');
+  const newSpan = document.createElement('span');
+  newSpan.className = 'due-date ' + dc;
+  newSpan.id = 'duedate-' + poNumber + '-' + line;
+  newSpan.textContent = dueDate || '—';
+  newSpan.setAttribute('onclick', "editDueDate('" + poNumber + "','" + line + "')");
+  newSpan.setAttribute('title', 'Click to edit');
+  if (inputEl && inputEl.parentElement) inputEl.replaceWith(newSpan);
+
+  renderStats();
+
+  if (!cfg.script) return;
+  try {
+    const url = cfg.script + '?action=updateDueDate' +
+      '&poNumber=' + encodeURIComponent(poNumber) +
+      '&line=' + encodeURIComponent(line) +
+      '&dueDate=' + encodeURIComponent(dueDate);
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if (!result.success) throw new Error(result.error);
+  } catch (err) {
+    alert('Failed to save due date: ' + err.message);
+  }
+}
+
+// ── LINE NOTES EDIT ───────────────────────────────────────────────────────────
+function editLineNotes(poNumber, line) {
+  const cellId = 'notescell-' + poNumber + '-' + line;
+  const cell = document.getElementById(cellId);
+  if (!cell || cell.querySelector('textarea')) return;
+
+  const item = allLines.find(l => String(l.poNumber) === String(poNumber) && String(l.line) === String(line));
+  const currentNotes = item ? (item.notes || '') : '';
+
+  cell.innerHTML =
+    '<div class="line-notes-edit-wrap">' +
+      '<textarea class="line-notes-textarea" id="notesta-' + poNumber + '-' + line + '" rows="2">' + esc(currentNotes) + '</textarea>' +
+      '<button class="btn-save-notes" id="notesbtn-' + poNumber + '-' + line + '" ' +
+        'onclick="saveLineNotes(\'' + poNumber + '\',\'' + line + '\')">Save</button>' +
+    '</div>';
+
+  const ta = document.getElementById('notesta-' + poNumber + '-' + line);
+  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+
+async function saveLineNotes(poNumber, line) {
+  const cfg = getConfig();
+  if (!cfg.script) return;
+
+  const ta  = document.getElementById('notesta-'  + poNumber + '-' + line);
+  const btn = document.getElementById('notesbtn-' + poNumber + '-' + line);
+  if (!ta) return;
+
+  const notes = ta.value;
+  if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+
+  const item = allLines.find(l => String(l.poNumber) === String(poNumber) && String(l.line) === String(line));
+  if (item) item.notes = notes;
+
+  try {
+    const url = cfg.script + '?action=updateLineNotes' +
+      '&poNumber=' + encodeURIComponent(poNumber) +
+      '&line=' + encodeURIComponent(line) +
+      '&notes=' + encodeURIComponent(notes);
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if (!result.success) throw new Error(result.error);
+
+    const cell = document.getElementById('notescell-' + poNumber + '-' + line);
+    if (cell) {
+      if (notes) {
+        cell.innerHTML = '<span class="line-notes-display" onclick="editLineNotes(\'' + poNumber + '\',\'' + line + '\')" title="Click to edit">' + esc(notes) + '</span>';
+      } else {
+        cell.innerHTML = '<span class="line-notes-add" onclick="editLineNotes(\'' + poNumber + '\',\'' + line + '\')" title="Click to add note">+ add note</span>';
+      }
+    }
+  } catch (err) {
+    alert('Failed to save notes: ' + err.message);
+    if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
+  }
+}
+
+// ── PO NOTES SAVE ─────────────────────────────────────────────────────────────
+async function savePONotes(poNumber) {
+  const cfg = getConfig();
+  if (!cfg.script) return;
+
+  const ta  = document.getElementById('ponotes-'    + poNumber);
+  const btn = document.getElementById('ponotesbtn-' + poNumber);
+  if (!ta) return;
+
+  const notes = ta.value;
+  if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+
+  const po = allPOs.find(p => String(p.poNumber) === String(poNumber));
+  if (po) po.poNotes = notes;
+
+  try {
+    const url = cfg.script + '?action=updatePONotes' +
+      '&poNumber=' + encodeURIComponent(poNumber) +
+      '&notes=' + encodeURIComponent(notes);
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if (!result.success) throw new Error(result.error);
+
+    if (btn) {
+      btn.textContent = 'Saved ✓';
+      btn.classList.add('saved');
+      setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); btn.disabled = false; }, 2000);
+    }
+  } catch (err) {
+    alert('Failed to save PO notes: ' + err.message);
+    if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
   }
 }
 
